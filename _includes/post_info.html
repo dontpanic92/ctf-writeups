@@ -1,0 +1,6 @@
+<span class="d-block"><small>发布日期：{{ page.date | date: "%Y年%m月%d日" }}</small></span>
+<span class="d-block"><small>类别：{{ page.tag }}</small></span>
+{% if page.challenge_url %}
+<span class="d-block"><small>题目链接：{{ page.challenge_url }}</small></span>
+{% endif %}
+<hr />

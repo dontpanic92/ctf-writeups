@@ -1,0 +1,6 @@
+[submodule "_sass/bootswatch"]
+	path = _sass/bootswatch
+	url = https://github.com/thomaspark/bootswatch
+[submodule "_sass/bootstrap"]
+	path = _sass/bootstrap
+	url = https://github.com/twbs/bootstrap

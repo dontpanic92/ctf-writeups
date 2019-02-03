@@ -1,0 +1,20 @@
+---
+---
+
+@import "bootswatch/dist/yeti/variables";
+@import "bootstrap/scss/bootstrap";
+@import "bootswatch/dist/yeti/bootswatch";
+
+.dp-navbar-right {
+    margin-right: 0.5em;
+}
+
+html, body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#content img {
+    @include img-fluid;
+}

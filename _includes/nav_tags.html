@@ -1,0 +1,18 @@
+<div>
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a data-nav-tag="all" class="nav-link active" href="javascript:filterTags();">All</a>
+        </li>
+        {% assign tags = site.tags | sort %}
+        {% for tag in tags %}
+        {% for post in tag[1] %}
+        {% if page.categories == nil or post.categories contains page.categories %}
+        <li class="nav-item">
+            <a data-nav-tag="{{ tag[0] }}" class="nav-link" href="javascript:filterTags('{{ tag[0] }}');">{{ tag[0] | capitalize }}</a>
+        </li>
+        {% break %}
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </ul>
+</div>

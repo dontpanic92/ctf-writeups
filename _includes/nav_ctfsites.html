@@ -1,0 +1,18 @@
+<div>
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a data-nav-tag="all" class="nav-link active" href="javascript:filterSiteAndTags();">All</a>
+        </li>
+        {% assign ctfsites = [] %}
+        {% for post in site.posts %}
+        {% unless ctfsites contains post.ctfsite %}
+        {% assign ctfsites = ctfsites | append: post.ctfsite %}
+        {% endunless %}
+        {% endfor %}
+        {% for ctfsite in ctfsites %}
+        <li class="nav-item">
+            <a data-nav-tag="{{ ctfsite }}" class="nav-link" href="javascript:filterTags('{{ ctfsite }}');">{{ ctfsite }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

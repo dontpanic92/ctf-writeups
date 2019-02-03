@@ -1,0 +1,43 @@
+---
+layout: default
+---
+<div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action {% if page.categories contains 'walkthrough' %}active{% endif %}" href="{{ '/' | relative_url }}">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action {% if page.categories contains 'notes' %}active{% endif %}" href="{{ '/notes' | relative_url }}">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action {% if page.categories contains 'cheatsheets' %}active{% endif %}" href="{{ '/cheatsheets' | relative_url }}">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action {% if page.categories contains 'tools' %}active{% endif %}" href="{{ '/tools' | relative_url }}">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            {% for post in site.posts limit:5 %}
+            <a class="list-group-item list-group-item-action" href="{{ post.url | relative_url }}">
+                <h6><strong>{{ post.title }}</strong></h6>
+                <span class="font-weight-light">{{ post.excerpt }}</span>
+                <small>{{ post.date | date: "%Y年%m月%d日" }} | {{ post.categories }} | {{ post.tags }}</small>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div id="content" class="col-9 pl-4">
+    {{ content }}
+</div>

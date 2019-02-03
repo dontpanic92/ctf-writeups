@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "zh-Hans" }}">
+
+<head>
+    <meta charset="utf-8">
+    {%- seo -%}
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/fontawesome.min.css' | relative_url }}">
+    <script src="{{ '/assets/js/index.js' | relative_url }}"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ '/' | relative_url }}">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ '/feed.xml' | relative_url }}" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3">
+            {{ content }}
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>{{ site.title }}</h5>
+                        <span class="d-block font-weight-light">{{ site.description }}</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/{{ site.github_username }}"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/{{ site.zhihu_profilename }}"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/{{ site.weibo_id }}/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/{{ site.linkedin_username }}"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/{{ site.stackoverflow_id }}"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/{{ site.renren_id }}"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
