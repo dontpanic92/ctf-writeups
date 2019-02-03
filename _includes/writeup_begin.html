@@ -1,0 +1,15 @@
+<div id="writeup_button">
+    <a href="javascript:showWriteup();">
+        <div class="alert alert-warning">
+            <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+        </div>
+    </a>
+    <script>
+    function showWriteup()
+    {
+        document.getElementById("writeup_button").classList.add("d-none");
+        document.getElementById("writeup").classList.remove("d-none");
+    }
+    </script>
+</div>
+<div id="writeup" class="d-none" markdown="1">

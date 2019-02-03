@@ -28,3 +28,18 @@ function filterTags(tag)
         }
     }
 }
+
+function initFlags()
+{
+    var elems = document.body.getElementsByTagName("flag");
+    console.log(elems);
+    for (var e of elems)
+    {
+        e.style.backgroundColor = "#000";
+        e.onmouseover = function() { e.style.color = "#FFF"; };
+        e.onmouseleave = function() { e.style.color = "#000"; };
+        e.onmouseleave();
+    }
+}
+
+window.onload=initFlags;

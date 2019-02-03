@@ -5,6 +5,8 @@
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/yeti/bootswatch";
 
+@import "autumn.css";
+
 .dp-navbar-right {
     margin-right: 0.5em;
 }
@@ -17,4 +19,5 @@ html, body {
 
 #content img {
     @include img-fluid;
+    box-shadow: $box-shadow-sm;
 }
