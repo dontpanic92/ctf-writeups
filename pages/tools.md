@@ -3,12 +3,10 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: page
-title: 实用工具集锦
+title: 实用工具索引
 categories: tools
 permalink: /tools/
 ---
-
-收录一些用过的免费或开源工具
 
 #### 二进制调试分析
 

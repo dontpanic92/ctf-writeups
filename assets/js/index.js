@@ -1,6 +1,8 @@
 function filterTags(tag)
 {
     var allPosts = document.querySelectorAll('[data-tag]');
+    console.log(allPosts);
+    console.log(tag);
     for (var post of allPosts)
     {
         var t = post.getAttribute('data-tag');

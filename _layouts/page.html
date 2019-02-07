@@ -3,5 +3,8 @@ layout: main
 ---
 
 <h1>{{ page.title }}</h1>
+{% if page.desc %}
+<span class="d-block"><small>{{ page.desc }}</small></span>
+{% endif %}
 <hr />
 {{ content }}

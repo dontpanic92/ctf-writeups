@@ -1,7 +1,7 @@
 <div class="list-group list-group-flush">
     {% for post in site.posts %}
     {% if page.categories == nil or post.categories contains page.categories %}
-        <a data-post-entry data-tag="{{ post.tag }}" data-ctfsite="{{ post.ctfsite }}" data-id="{{ post.id }}" class="list-group-item list-group-item-action" href="{{ post.url | relative_url }}">
+        <a data-tag="{{ post.tags }}" data-ctfsite="{{ post.ctfsite }}" data-id="{{ post.id }}" class="list-group-item list-group-item-action" href="{{ post.url | relative_url }}">
             <h5><strong>{{ post.title }}</strong></h5>
             <span class="d-block">{{ post.excerpt }}</span>
             <small>{{ post.date | date: "%Y年%m月%d日" }} |{% if post.ctfsite %} {{post.ctfsite}} |{% endif %} {{ post.tags[0] | capitalize }}</small>
