@@ -41,6 +41,14 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-diagrams
+
+diagrams:
+  graphviz:
+    engine: dot
+    options: '-Tsvg'
+  diag:
+    options: '-Tsvg --nodoctype'
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list

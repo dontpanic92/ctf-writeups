@@ -127,4 +127,6 @@ $(prob).o: $(prob).c
 
 `cat`一下，即得到了flag：<flag>flag{c0lor_0f_0verf1ow}</flag>
 
+{% related_note stack-buffer-overflow-101 %}
+
 {% include writeup_end.html %}

@@ -120,7 +120,7 @@ challenge_url: http://reversing.kr/challenge.php
 
 随后，第25行判断了一下第一个字符的内容是否为`a`；第32行将`5y`和第三个字符地址的地址传入了`fcn.00401150`。去看一下这个函数：
 
-{% highlight nasm %}
+{% highlight nasm linenos %}
 / (fcn) fcn.00401150 56
 |   fcn.00401150 (int arg_8h, unsigned int arg_ch, int arg_10h);
 |           ; arg int arg_8h @ ebp+0x8
