@@ -7,7 +7,7 @@ tags: binary
 
 由于函数调用的自然特性，同时为了支持函数的递归调用，我们通常使用栈来保存函数局部信息的数据结构。例如，对于下面的 C 语言程序：
 
-{% highlight c linenos %}
+```{  .c .numberLines }
 int func2()
 {
     int c = 2;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     printf("%d\n", a);
     return 0;
 }
-{% endhighlight %}
+```
 
 {% graphviz %}
 digraph g {
@@ -84,13 +84,13 @@ bp 寄存器中存储的为当前栈帧的基地址。当一个函数被调用�
 
 想要改变程序的执行流程，就需要改变那些能够影响程序执行的数据。返回地址是最典型的会影响执行流程的数据之一。如果我们将返回地址覆盖为其它地址，当函数返回时，程序就会跳转至我们设定好的地址上。例如，这段程序：
 
-{% highlight c linenos%}
+```{ .c .numberLines }
 int func()
 {
     char s[8];
     gets(s);
 }
-{% endhighlight %}
+```
 
 下图分别展示了输入“abcdefg”和输入“abcdefghijklmnopqrs”时的情况。可以看到，返回地址被其中几个字符`mnop`所覆盖。只要把这几个字符换成我们需要跳转的地址，即可让函数返回时跳转过去。
 

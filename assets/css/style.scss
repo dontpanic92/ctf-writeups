@@ -1,13 +1,13 @@
 ---
 ---
 
-$code-font-size:                    0.8rem !default;
+$code-font-size:                    0.85rem !default;
 
 @import "bootswatch/dist/yeti/variables";
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/yeti/bootswatch";
 
-@import "autumn.css";
+@import "default.css";
 
 .dp-navbar-right {
     margin-right: 0.5em;
@@ -30,4 +30,9 @@ html, body {
 
 .lineno {
     margin-right: 0.5em;
+}
+
+figcaption {
+    font-size: 80%;
+    font-weight: 400;
 }

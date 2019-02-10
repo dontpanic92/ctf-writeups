@@ -26,7 +26,7 @@ categories: cheatsheets
 
 ----
 
-#### 栈
+#### 调用栈
 
 - `bt`
     - 显示 backtrace
@@ -38,3 +38,8 @@ categories: cheatsheets
     - 单步 Step Over 一句汇编代码
 - `si`
     - 单步 Step Into 一句汇编代码
+
+#### 数据
+- `x` 显示指定位置内存
+    - `x/s` 字符串
+    - `x/40xb` 40 字节

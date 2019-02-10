@@ -31,7 +31,7 @@ weibo_nickname: 动特潘尼克
 renren_id: 419200039
 
 # Build settings
-markdown: kramdown
+markdown: Pandoc
 permalink: none
 sass:
     sass_dir: _sass
@@ -41,7 +41,14 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-pandoc
   - jekyll-diagrams
+
+encoding: utf-8
+
+pandoc:
+  extensions:
+    - from: "markdown+raw_attribute-implicit_figures"
 
 diagrams:
   graphviz:

