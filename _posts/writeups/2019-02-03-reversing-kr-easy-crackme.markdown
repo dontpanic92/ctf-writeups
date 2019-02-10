@@ -7,17 +7,17 @@ ctfsite: reversing.kr
 challenge_url: http://reversing.kr/challenge.php
 ---
 
-双击点开`Easy CrackMe.exe`，将弹出一个对话框，要求输入密码。点击按钮后将对密码进行验证。
+双击点开 `Easy CrackMe.exe`，将弹出一个对话框，要求输入密码。点击按钮后将对密码进行验证。
 
 ![screenshot]({% asset screenshot.png %})
 
 {% include writeup_begin.html %}
 
-首先用 Cutter 打开`Easy CrackMe.exe`，看看 Strings 里面有没有什么特别的：
+首先用 Cutter 打开 `Easy CrackMe.exe`，看看 Strings 里面有没有什么特别的：
 
 ![strings]({% asset strings.png %})
 
-`AGR3versing`似乎有点奇怪。输进去看看，不对。除此之外，就是`Wrong Password`和`Congratulations`最吸引我们了。看一下`Congratulations`的交叉引用，跳到了：
+`AGR3versing` 似乎有点奇怪。输进去看看，不对。除此之外，就是 `Wrong Password` 和 `Congratulations` 最吸引我们了。看一下 `Congratulations` 的交叉引用，跳到了：
 
 {% highlight nasm linenos %}
 |      ||   0x00401114      push 0x40 ; '@' ; 64
@@ -114,11 +114,11 @@ challenge_url: http://reversing.kr/challenge.php
 |     |||   0x0040111b      push str.Congratulation ; 0x406044 ; "Congratulation !!"
 {% endhighlight %}
 
-由于这个函数的局部变量由esp索引，而R2没有捕捉到esp的变化，导致函数中的变量名的使用会有些误导，在分析时需要注意。举例来说，上面的代码片段14行有一处push，导致第20行的local_8h（esp+8）实际应为local_4h。我在有问题的语句后做了注释。
+由于这个函数的局部变量由 esp 索引，而 R2 没有捕捉到 esp 的变化，导致函数中的变量名的使用会有些误导，在分析时需要注意。举例来说，上面的代码片段 14 行有一处 push，导致第 20 行的 local_8h（esp+8）实际应为 local_4h。我在有问题的语句后做了注释。
 
-首先来看第24行，`GetDlgItemText`是一个Win32 API，其中第三个参数是字符串的地址。第21行压入的eax即为第三个参数，它指向的是`local_4h`，因此`local_4h`就是字符串的第零个字符的地址。
+首先来看第 24 行，`GetDlgItemText` 是一个 Win32 API，其中第三个参数是字符串的地址。第 21 行压入的 eax 即为第三个参数，它指向的是 `local_4h`，因此 `local_4h` 就是字符串的第零个字符的地址。
 
-随后，第25行判断了一下第一个字符的内容是否为`a`；第32行将`5y`和第三个字符地址的地址传入了`fcn.00401150`。去看一下这个函数：
+随后，第 25 行判断了一下第一个字符的内容是否为 `a`；第 32 行将 `5y` 和第三个字符地址的地址传入了 `fcn.00401150`。去看一下这个函数：
 
 {% highlight nasm linenos %}
 / (fcn) fcn.00401150 56
@@ -159,6 +159,6 @@ challenge_url: http://reversing.kr/challenge.php
 \           0x00401187      ret
 {% endhighlight %}
 
-看起来只是在做字符串比较，所以第三四个字符应该是`5y`。再继续看，从第38行开始，字符串`R3versing`出现了，下面的代码又是在不断地比较每一个字符是否与`R3versing`相同。最后64行比较了第一个字符是否为`E`，至此密码已经找到了：<flag>Ea5yR3versing</flag>。
+看起来只是在做字符串比较，所以第三四个字符应该是 `5y` 。再继续看，从第38行开始，字符串 `R3versing` 出现了，下面的代码又是在不断地比较每一个字符是否与 `R3versing` 相同。最后 64 行比较了第一个字符是否为 `E`，至此密码已经找到了：<flag>Ea5yR3versing</flag>。
 
 {% include writeup_end.html %}
