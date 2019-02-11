@@ -23,7 +23,7 @@ Enter the password to contiune:  abcd
 
 ![strings]({% asset strings.png %})
 
-看一下 Successful Login 的交叉引用，只在 `main` 函数里使用了。看来所有的验证逻辑都在 `main` 函数中。首先看一下函数开始的部分：
+看一下 Successful Login 的交叉引用，只在 `main` 函数里使用了。往上翻一翻，看起来所有的验证逻辑都在 `main` 函数中。首先看一下函数开始的部分：
 
 ```{ .asm .numberLines }
 |           0x00000815      movabs rax, 0x4463457d4f625f68 ; 'h_bO}EcD'
