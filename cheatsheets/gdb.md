@@ -52,6 +52,8 @@ categories: cheatsheets
     - 显示各个模块映射情况
 - `find 0x80048000, 0xc0000000, "/bin/sh"`
     - 搜索内容
+- `set {int}0x83040 = 4`
+    - 写内存
 
 ----
 
