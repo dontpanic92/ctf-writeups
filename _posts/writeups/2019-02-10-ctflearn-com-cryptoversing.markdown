@@ -34,7 +34,7 @@ Enter the password to contiune:  abcd
 |           0x00000841      mov  byte [local_8ch], 0x4c ; 'L'
 ```
 
-这里其实是在向 `local_a0h` (rbp-0xa0) 的字符串赋值。将几个字符串拼起来之后就是 `h_bO}EcDOR+G)uh(jl,vL`。需要注意的是这里没有设置字符串终止的 `\0`。
+这里其实是在向 `local_a0h` (即 `$rbp-0xa0`) 进行字符串赋值。将几个字符串拼起来之后就是 `h_bO}EcDOR+G)uh(jl,vL`。需要注意的是这里没有设置字符串终止的 `\0`。
 
 再往下就是计算的主要逻辑部分：
 

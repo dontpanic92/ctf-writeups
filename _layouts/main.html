@@ -31,7 +31,7 @@ layout: default
             {% for post in site.posts limit:5 %}
             <a class="list-group-item list-group-item-action" href="{{ post.url | relative_url }}">
                 <h6><strong>{{ post.title }}</strong></h6>
-                <span class="font-weight-light">{{ post.excerpt }}</span>
+                <span class="font-weight-light">{{ post.excerpt | strip_a }}</span>
                 <small>{{ post.date | date: "%Y年%m月%d日" }} | {{ post.categories }} | {{ post.tags }}</small>
             </a>
             {% endfor %}

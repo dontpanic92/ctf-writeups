@@ -29,3 +29,7 @@ permalink: /tools/
 ##### Visual Basic
 - [VB Decompiler Lite](https://www.vb-decompiler.org/download.htm)
     - VB Decompiler 的免费版，有诸多限制
+
+##### 在线工具
+- [shellcode 集锦](http://shell-storm.org/shellcode/)
+- [Online Dis-/Assembler](http://shell-storm.org/online/Online-Assembler-and-Disassembler/)

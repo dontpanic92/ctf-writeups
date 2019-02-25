@@ -9,3 +9,4 @@ permalink: /cheatsheets/
 ---
 
 - [GDB]({{ '/cheatsheets/gdb' | relatvie_url }})
+- [radare2]({{ '/cheatsheets/radare2' | relatvie_url }})

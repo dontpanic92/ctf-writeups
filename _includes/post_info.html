@@ -1,5 +1,10 @@
 <span class="d-block"><small>发布日期：{{ page.date | date: "%Y年%m月%d日" }}</small></span>
 <span class="d-block"><small>类别：{{ page.tags }}</small></span>
+{% if page.ctfsite %}
+<span class="d-block">
+    <small>题目来源：{{ page.ctfsite }}</small>
+</span>
+{% endif %}
 {% if page.challenge_url %}
 <span class="d-block">
     <small>题目链接：<a href="{{ page.challenge_url }}" target="_blank">{{ page.challenge_url }}</a>

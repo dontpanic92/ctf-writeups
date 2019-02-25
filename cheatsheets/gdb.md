@@ -15,6 +15,9 @@ categories: cheatsheets
 - `r program < <(bash_commands)`
     - 将 `bash_commands` 的 stdout 输入至 `program` 的 stdin
 
+- `finish`
+    - 运行至返回
+
 ----
 
 #### 断点
@@ -39,7 +42,19 @@ categories: cheatsheets
 - `si`
     - 单步 Step Into 一句汇编代码
 
+----
+
 #### 数据
 - `x` 显示指定位置内存
     - `x/s` 字符串
     - `x/40xb` 40 字节
+- `info proc map`
+    - 显示各个模块映射情况
+- `find 0x80048000, 0xc0000000, "/bin/sh"`
+    - 搜索内容
+
+----
+
+#### 设置
+- `set disable-randomization off`
+    - 启用 ASLR

