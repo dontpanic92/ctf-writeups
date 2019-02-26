@@ -116,4 +116,6 @@ print p.stdout.readline()
 
 ```
 
+{% related_note stack-buffer-overflow-aslr %}
+
 {% include writeup_end.html %}

@@ -89,7 +89,7 @@ radare2 搜索一下就会发现，我们仍然有现成的 "/bin/sh" 可以利�
 
 #### 构造出 /bin/sh 字符串
 
-如果没有现成的字符串怎么办呢？也有办法，我们可以自行构造出 “/bin/sh”。首先 `call_me_with_two_args` 中，已经向 `exec_string` 拷贝了 `/bin`；我们下面要做的就是在后面街上 `/sh`，这可以通过调用 `strcpy` 来实现；然后我们就可以直接调用 `exec_the_string` 函数了。
+如果没有现成的字符串怎么办呢？也有办法，我们可以自行构造出 “/bin/sh”。首先 `call_me_with_two_args` 中，已经向 `exec_string` 拷贝了 `/bin`；我们下面要做的就是在后面接上 `/sh`，这可以通过调用 `strcpy` 来实现；然后我们就可以直接调用 `exec_the_string` 函数了。
 
 首先看一下 `call_me_with_two_args`：
 
@@ -145,7 +145,7 @@ print '0'*0x88 + '0000\x23\x8f\x04\x08' + '0000\xAA\xAA\xAA\xAA\x??\x??\x??\x??\
 
 至于参数，第一个参数自然就是 `exec_string + 4`，第二个参数是 `/sh` 的地址。
 
-在上面的命令中，还有一块 `\x??\x??\x??\x??` 没有确定。这是 `strcpy` 函数的返回地址。这里直接填入 `exec_the_string` 函数的地址即可。因此完整的爆破命令为：
+在上面的命令中，还有一块 `\x??\x??\x??\x??` 没有确定，这是 `strcpy` 函数的返回地址。这里直接填入 `exec_the_string` 函数的地址即可。因此完整的爆破命令为：
 
 ```python
                                                       ↓call_me_with_two_args pop ebp        ↓strcpy参数1    ↓strcpy参数2
