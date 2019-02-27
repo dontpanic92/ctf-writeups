@@ -1,33 +1,32 @@
 ```{=html}
-<div id="writeup_show_button">
-    <a href="javascript:showWriteup();">
-        <div class="alert alert-warning">
-            <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
-        </div>
-    </a>
-    <script>
-    function showWriteup()
-    {
-        document.getElementById("writeup_hide_button").classList.remove("d-none");
-        document.getElementById("writeup_show_button").classList.add("d-none");
-        document.getElementById("writeup").classList.remove("d-none");
-    }
-    </script>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
 </div>
-<div id="writeup_hide_button" class="d-none">
-    <a href="javascript:hideWriteup();">
-        <div class="alert alert-info">
-            <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
-        </div>
-    </a>
-    <script>
-    function hideWriteup()
-    {
-        document.getElementById("writeup_hide_button").classList.add("d-none");
-        document.getElementById("writeup_show_button").classList.remove("d-none");
-        document.getElementById("writeup").classList.add("d-none");
-    }
-    </script>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
 </div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
 <div id="writeup" class="d-none" markdown="1">
 ```

