@@ -107,8 +107,9 @@ int func()
 
 #### 栈缓冲溢出防护措施
 
-当指定了`/GS`编译选项，Visual C++ 的编译器会在每个栈帧的栈基址上方放入一个 Security Cookie。GCC 也有类似的机制并默认打开。在函数返回之前，编译器会插入一段检查逻辑；如果栈中的 Security Cookie 与另一个 Cookie 备份不一致的话，就中止程序的执行。
-
-此外，大多数现代系统都有可执行空间保护，即取消栈所在内存的可执行属性，这样攻击者就难以注入自己的指令。
-
-关于 SEH 异常处理函数，Windows 会拒绝跳转至栈中的地址。
+- 随机化栈地址、动态库地址（地址空间布局随机化）
+  {% related_note stack-buffer-overflow-aslr %}
+- 栈溢出检测
+  {% related_note stack-buffer-overflow-canary %}
+- 拒绝在栈中执行指令（数据执行保护）
+- 当 SEH 异常处理函数被触发时，Windows 会拒绝跳转至栈中的地址

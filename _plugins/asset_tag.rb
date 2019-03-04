@@ -48,19 +48,19 @@
 
 module Jekyll
 
-    def self.get_post_path(page_id, posts)
+    def self.get_post_path(post_slug, posts)
       #check for Jekyll version
       if Jekyll::VERSION < '3.0.0'
         #loop through posts to find match and get slug
         posts.each do |post|
-          if post.id == page_id
+          if post.slug == post_slug
             return "posts/#{post.slug}"
           end
         end
       else
         #loop through posts to find match and get slug, method calls for Jekyll 3
         posts.docs.each do |post|
-          if post.id == page_id
+          if post.data['slug'] == post_slug
             return "posts/#{post.data['slug']}"
           end
         end
@@ -91,19 +91,19 @@ module Jekyll
           # Quoted filename, possibly followed by post id
           last_quote_index = parameters.rindex(parameters[0])
           filename = parameters[1 ... last_quote_index]
-          post_id = parameters[(last_quote_index + 1) .. -1].strip
+          post_slug = parameters[(last_quote_index + 1) .. -1].strip
         else
           # Unquoted filename, possibly followed by post id
-          filename, post_id = parameters.split(/\s+/)
+          filename, post_slug = parameters.split(/\s+/)
         end
   
         page = context.environments.first["page"]
   
-        post_id = page["id"] if post_id == nil or post_id.empty?
-        if post_id
+        post_slug = page["slug"] if post_slug == nil or post_slug.empty?
+        if post_slug
           #if a post
           posts = context.registers[:site].posts
-          path = Jekyll.get_post_path(post_id, posts)
+          path = Jekyll.get_post_path(post_slug, posts)
         else
           path = page["url"]
         end
