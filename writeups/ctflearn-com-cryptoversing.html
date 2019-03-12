@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Cryptoversing | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Cryptoversing" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="将题目中的程序下载下来，运行后提示输入密码：" />
+<meta property="og:description" content="将题目中的程序下载下来，运行后提示输入密码：" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/writeups/ctflearn-com-cryptoversing.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/writeups/ctflearn-com-cryptoversing.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-10T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"将题目中的程序下载下来，运行后提示输入密码：","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/writeups/ctflearn-com-cryptoversing.html","headline":"Cryptoversing","dateModified":"2019-02-10T00:00:00+00:00","datePublished":"2019-02-10T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/writeups/ctflearn-com-cryptoversing.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action active" href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2013-rop-4.html">
+                <h6><strong>ROP 4</strong></h6>
+                <span class="font-weight-light"><p>这道题是 PicoCTF 2013 ROP 系列的最后一题：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>Cryptoversing</h1>
+<span class="d-block"><small>发布日期：2019年02月10日</small></span>
+<span class="d-block"><small>类别：reversing</small></span>
+
+<span class="d-block">
+    <small>题目来源：ctflearn.com</small>
+</span>
+
+
+<span class="d-block">
+    <small>题目链接：<a href="https://ctflearn.com/problems/667" target="_blank">https://ctflearn.com/problems/667</a>
+
+        (需要注册登录)
+
+    </small>
+</span>
+
+
+<hr />
+<p>将题目中的程序下载下来，运行后提示输入密码：</p>
+<pre><code>dontpanic@Win:~$ ./xor.bin
+[*] Hello! Welcome to our Program!
+Enter the password to contiune:  abcd
+[-] Wrong Password</code></pre>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>使用 Cutter 载入 <code>xor.bin</code>，照例先看一下字符串：</p>
+<p><img src="/assets/local/posts/ctflearn-com-cryptoversing/strings.png" alt="strings" /></p>
+<p>看一下 Successful Login 的交叉引用，只在 <code>main</code> 函数里使用了。往上翻一翻，看起来所有的验证逻辑都在 <code>main</code> 函数中。首先看一下函数开始的部分：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb2-1" title="1">|<span class="bn">           0x00000815      </span>movabs <span class="kw">rax</span><span class="bn">, 0x4463457d4f625f68 </span><span class="co">; &#39;h_bO}EcD&#39;</span></a>
+<a class="sourceLine" id="cb2-2" title="2">|<span class="bn">           0x0000081f      </span>movabs <span class="kw">rdx</span><span class="bn">, 0x28687529472b524f </span><span class="co">; &#39;OR+G)uh(&#39;</span></a>
+<a class="sourceLine" id="cb2-3" title="3">|<span class="bn">           0x00000829      </span><span class="bu">mov</span>  <span class="dt">qword</span> [local_a0h], <span class="kw">rax</span></a>
+<a class="sourceLine" id="cb2-4" title="4">|<span class="bn">           0x00000830      </span><span class="bu">mov</span>  <span class="dt">qword</span> [local_98h], <span class="kw">rdx</span></a>
+<a class="sourceLine" id="cb2-5" title="5">|<span class="bn">           0x00000837      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_90h]<span class="bn">, 0x762c6c6a </span><span class="co">; &#39;jl,v&#39;</span></a>
+<a class="sourceLine" id="cb2-6" title="6">|<span class="bn">           0x00000841      </span><span class="bu">mov</span>  <span class="dt">byte</span> [local_8ch]<span class="bn">, 0x4c </span><span class="co">; &#39;L&#39;</span></a></code></pre></div>
+<p>这里其实是在向 <code>local_a0h</code> (即 <code>$rbp-0xa0</code>) 进行字符串赋值。将几个字符串拼起来之后就是 <code>h_bO}EcDOR+G)uh(jl,vL</code>。需要注意的是这里没有设置字符串终止的 <code>\0</code>。</p>
+<p>再往下就是计算的主要逻辑部分：</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb3-1" title="1">|<span class="bn">           0x0000087b      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_b8h]<span class="bn">, 0x10</span></a>
+<a class="sourceLine" id="cb3-2" title="2">|<span class="bn">           0x00000885      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_b4h]<span class="bn">, 0x18</span></a>
+<a class="sourceLine" id="cb3-3" title="3">|<span class="bn">           0x0000088f      </span><span class="bu">lea</span>  <span class="kw">rax</span>, [s]</a>
+<a class="sourceLine" id="cb3-4" title="4">|<span class="bn">           0x00000893      </span><span class="bu">mov</span>  <span class="kw">rdi</span>, <span class="kw">rax</span> <span class="co">; const char *s</span></a>
+<a class="sourceLine" id="cb3-5" title="5">|<span class="bn">           0x00000896      </span><span class="bu">call</span> sym.imp.strlen <span class="co">; size_t strlen(const char *s)</span></a>
+<a class="sourceLine" id="cb3-6" title="6">|<span class="bn">           0x0000089b      </span><span class="bu">shr</span>  <span class="kw">rax</span>, <span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-7" title="7">|<span class="bn">           0x0000089e      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_b0h], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-8" title="8">|<span class="bn">           0x000008a4      </span><span class="bu">lea</span>  <span class="kw">rax</span>, [s]</a>
+<a class="sourceLine" id="cb3-9" title="9">|<span class="bn">           0x000008a8      </span><span class="bu">mov</span>  <span class="kw">rdi</span>, <span class="kw">rax</span> <span class="co">; const char *s</span></a>
+<a class="sourceLine" id="cb3-10" title="10">|<span class="bn">           0x000008ab      </span><span class="bu">call</span> sym.imp.strlen <span class="co">; size_t strlen(const char *s)</span></a>
+<a class="sourceLine" id="cb3-11" title="11">|<span class="bn">           0x000008b0      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_ach], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-12" title="12">|<span class="bn">           0x000008b6      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_a8h], <span class="dv">0</span></a>
+<a class="sourceLine" id="cb3-13" title="13">|<span class="bn">           0x000008c0      </span><span class="bu">lea</span>  <span class="kw">rax</span>, [s]</a>
+<a class="sourceLine" id="cb3-14" title="14">|<span class="bn">           0x000008c4      </span><span class="bu">mov</span>  <span class="kw">rdi</span>, <span class="kw">rax</span> <span class="co">; const char *s</span></a>
+<a class="sourceLine" id="cb3-15" title="15">|<span class="bn">           0x000008c7      </span><span class="bu">call</span> sym.imp.strlen <span class="co">; size_t strlen(const char *s)</span></a>
+<a class="sourceLine" id="cb3-16" title="16">|<span class="bn">           0x000008cc      </span><span class="bu">shr</span>  <span class="kw">rax</span>, <span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-17" title="17">|<span class="bn">           0x000008cf      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_a4h], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-18" title="18">|<span class="bn">           0x000008d5      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_cch], <span class="dv">0</span></a>
+<a class="sourceLine" id="cb3-19" title="19">|       ,=&lt;<span class="bn"> 0x000008df      </span><span class="bu">jmp</span><span class="bn">  0x968</span></a>
+<a class="sourceLine" id="cb3-20" title="20">|       |<span class="bn">   0x000008e4      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_cch]</a>
+<a class="sourceLine" id="cb3-21" title="21">|       |<span class="bn">   0x000008ea      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb3-22" title="22">|       |<span class="bn">   0x000008ec      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [<span class="kw">rbp</span> + <span class="kw">rax</span>*<span class="dv">4</span> - <span class="bn">0xa8</span>]</a>
+<a class="sourceLine" id="cb3-23" title="23">|       |<span class="bn">   0x000008f3      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_c8h], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-24" title="24">|      ,==&lt;<span class="bn"> 0x000008f9      </span><span class="bu">jmp</span><span class="bn">  0x94a</span></a>
+<a class="sourceLine" id="cb3-25" title="25">|      ||<span class="bn">   0x000008fb      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_c8h]</a>
+<a class="sourceLine" id="cb3-26" title="26">|      ||<span class="bn">   0x00000901      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb3-27" title="27">|      ||<span class="bn">   0x00000903      </span><span class="bu">movzx</span> <span class="kw">eax</span>, <span class="dt">byte</span> [<span class="kw">rbp</span> + <span class="kw">rax</span> - <span class="bn">0x60</span>]</a>
+<a class="sourceLine" id="cb3-28" title="28">|      ::<span class="bn">   0x00000908      </span><span class="bu">movsx</span> <span class="kw">eax</span>, <span class="kw">al</span></a>
+<a class="sourceLine" id="cb3-29" title="29">|      ::<span class="bn">   0x0000090b      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_bch], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-30" title="30">|      ::<span class="bn">   0x00000911      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_cch]</a>
+<a class="sourceLine" id="cb3-31" title="31">|      ::<span class="bn">   0x00000917      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb3-32" title="32">|      ::<span class="bn">   0x00000919      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [<span class="kw">rbp</span> + <span class="kw">rax</span>*<span class="dv">4</span> - <span class="bn">0xb8</span>]</a>
+<a class="sourceLine" id="cb3-33" title="33">|      ::<span class="bn">   0x00000920      </span><span class="bu">mov</span>  <span class="kw">edx</span>, <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-34" title="34">|      ::<span class="bn">   0x00000922      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_bch]</a>
+<a class="sourceLine" id="cb3-35" title="35">|      ::<span class="bn">   0x00000928      </span><span class="bu">xor</span>  <span class="kw">eax</span>, <span class="kw">edx</span></a>
+<a class="sourceLine" id="cb3-36" title="36">|      ::<span class="bn">   0x0000092a      </span><span class="bu">mov</span>  <span class="dt">byte</span> [local_cdh], <span class="kw">al</span></a>
+<a class="sourceLine" id="cb3-37" title="37">|      ::<span class="bn">   0x00000930      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_c8h]</a>
+<a class="sourceLine" id="cb3-38" title="38">|      ::<span class="bn">   0x00000936      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb3-39" title="39">|      ::<span class="bn">   0x00000938      </span><span class="bu">movzx</span> <span class="kw">edx</span>, <span class="dt">byte</span> [local_cdh]</a>
+<a class="sourceLine" id="cb3-40" title="40">|      ::<span class="bn">   0x0000093f      </span><span class="bu">mov</span>  <span class="dt">byte</span> [<span class="kw">rbp</span> + <span class="kw">rax</span> - <span class="bn">0x80</span>], <span class="kw">dl</span></a>
+<a class="sourceLine" id="cb3-41" title="41">|      ::<span class="bn">   0x00000943      </span><span class="bu">add</span>  <span class="dt">dword</span> [local_c8h], <span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-42" title="42">|      ::<span class="bn">   0x0000094a      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_cch]</a>
+<a class="sourceLine" id="cb3-43" title="43">|      ::<span class="bn">   0x00000950      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb3-44" title="44">|      ::<span class="bn">   0x00000952      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [<span class="kw">rbp</span> + <span class="kw">rax</span>*<span class="dv">4</span> - <span class="bn">0xb0</span>]</a>
+<a class="sourceLine" id="cb3-45" title="45">|      ::<span class="bn">   0x00000959      </span><span class="bu">cmp</span>  <span class="dt">dword</span> [local_c8h], <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb3-46" title="46">|      `==&lt;<span class="bn"> 0x0000095f      </span><span class="bu">jl</span><span class="bn">   0x8fb</span></a>
+<a class="sourceLine" id="cb3-47" title="47">|       :<span class="bn">   0x00000961      </span><span class="bu">add</span>  <span class="dt">dword</span> [local_cch], <span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-48" title="48">|       :<span class="bn">   0x00000968      </span><span class="bu">cmp</span>  <span class="dt">dword</span> [local_cch], <span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-49" title="49">|       `=&lt;<span class="bn"> 0x0000096f      </span><span class="bu">jle</span><span class="bn">  0x8e4</span></a></code></pre></div>
+<p>仔细读一下这段代码，可以看出这是一个两层的循环。写出对应的 C 语言代码如下：</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb4-1" title="1"><span class="dt">char</span>* s; <span class="co">// s 中存放的是输入的字符串</span></a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="dt">int</span> local_a8[<span class="dv">2</span>] = { <span class="dv">0</span>, strlen(s) / <span class="dv">2</span> };</a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="dt">int</span> local_b8[<span class="dv">2</span>] = { <span class="bn">0x10</span>, <span class="bn">0x18</span> };</a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="dt">int</span> local_b0[<span class="dv">2</span>] = { strlen(s) / <span class="dv">2</span>, strlength };</a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="dt">char</span> local_80[<span class="bn">0x20</span>];</a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="dt">int</span> j, flag_2;</a>
+<a class="sourceLine" id="cb4-7" title="7"></a>
+<a class="sourceLine" id="cb4-8" title="8"><span class="cf">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt;= <span class="dv">1</span>; i++)</a>
+<a class="sourceLine" id="cb4-9" title="9">{</a>
+<a class="sourceLine" id="cb4-10" title="10">    j = local_a8[i];</a>
+<a class="sourceLine" id="cb4-11" title="11">    <span class="cf">for</span> (; j &lt; local_b0[i]; j++)</a>
+<a class="sourceLine" id="cb4-12" title="12">    {</a>
+<a class="sourceLine" id="cb4-13" title="13">        flag_2 = s[j];</a>
+<a class="sourceLine" id="cb4-14" title="14">        local_80[j] = flag_2 ^ local_b8[i];</a>
+<a class="sourceLine" id="cb4-15" title="15">    }</a>
+<a class="sourceLine" id="cb4-16" title="16">}</a></code></pre></div>
+<p>可以看出，这段代码的基本操作就是把字符串的前半段与 <code>0x10</code> 异或、后半段与 <code>0x18</code> 异或，将结果存入 <code>local_80</code> 数组中。</p>
+<p>再向下就是检查结果了：</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb5-1" title="1">|<span class="bn">           0x00000975      </span><span class="bu">mov</span>  <span class="dt">dword</span> [local_c4h], <span class="dv">0</span></a>
+<a class="sourceLine" id="cb5-2" title="2">|       ,=&lt;<span class="bn"> 0x0000097f      </span><span class="bu">jmp</span><span class="bn">  0x9bf</span></a>
+<a class="sourceLine" id="cb5-3" title="3">|       |<span class="bn">   0x00000981      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_c4h]</a>
+<a class="sourceLine" id="cb5-4" title="4">|       |<span class="bn">   0x00000987      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb5-5" title="5">|       |<span class="bn">   0x00000989      </span><span class="bu">movzx</span> <span class="kw">edx</span>, <span class="dt">byte</span> [<span class="kw">rbp</span> + <span class="kw">rax</span> - <span class="bn">0x80</span>]</a>
+<a class="sourceLine" id="cb5-6" title="6">|       |<span class="bn">   0x0000098e      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_c4h]</a>
+<a class="sourceLine" id="cb5-7" title="7">|       |<span class="bn">   0x00000994      </span><span class="bu">cdqe</span></a>
+<a class="sourceLine" id="cb5-8" title="8">|       |<span class="bn">   0x00000996      </span><span class="bu">movzx</span> <span class="kw">eax</span>, <span class="dt">byte</span> [<span class="kw">rbp</span> + <span class="kw">rax</span> - <span class="bn">0xa0</span>]</a>
+<a class="sourceLine" id="cb5-9" title="9">|       |<span class="bn">   0x0000099e      </span><span class="bu">cmp</span>  <span class="kw">dl</span>, <span class="kw">al</span></a>
+<a class="sourceLine" id="cb5-10" title="10">|      ,==&lt;<span class="bn"> 0x000009a0      </span><span class="bu">je</span><span class="bn">   0x9b8</span></a>
+<a class="sourceLine" id="cb5-11" title="11">|      ||<span class="bn">   0x000009a2      </span><span class="bu">lea</span>  <span class="kw">rdi</span>, <span class="bu">str</span>.Wrong_Password <span class="co">; 0xae0 ; &quot;[-] Wrong Password&quot; ; const char *s</span></a>
+<a class="sourceLine" id="cb5-12" title="12">|      ||<span class="bn">   0x000009a9      </span><span class="bu">call</span> sym.imp.puts <span class="co">; int puts(const char *s)</span></a>
+<a class="sourceLine" id="cb5-13" title="13">|      ||<span class="bn">   0x000009ae      </span><span class="bu">mov</span>  <span class="kw">edi</span>, <span class="dv">0</span> <span class="co">; int status</span></a>
+<a class="sourceLine" id="cb5-14" title="14">|      ||<span class="bn">   0x000009b3      </span><span class="bu">call</span> sym.imp.exit <span class="co">; void exit(int status)</span></a>
+<a class="sourceLine" id="cb5-15" title="15">|      `--&gt;<span class="bn"> 0x000009b8      </span><span class="bu">add</span>  <span class="dt">dword</span> [local_c4h], <span class="dv">1</span></a>
+<a class="sourceLine" id="cb5-16" title="16">|       `-&gt;<span class="bn"> 0x000009bf      </span><span class="bu">mov</span>  <span class="kw">eax</span>, <span class="dt">dword</span> [local_c4h]</a>
+<a class="sourceLine" id="cb5-17" title="17">|<span class="bn">           0x000009c5      </span><span class="bu">movsxd</span> <span class="kw">rbx</span>, <span class="kw">eax</span></a>
+<a class="sourceLine" id="cb5-18" title="18">|       :<span class="bn">   0x000009c8      </span><span class="bu">lea</span>  <span class="kw">rax</span>, [local_a0h]</a>
+<a class="sourceLine" id="cb5-19" title="19">|       :<span class="bn">   0x000009cf      </span><span class="bu">mov</span>  <span class="kw">rdi</span>, <span class="kw">rax</span> <span class="co">; const char *s</span></a>
+<a class="sourceLine" id="cb5-20" title="20">|       :<span class="bn">   0x000009d2      </span><span class="bu">call</span> sym.imp.strlen <span class="co">; size_t strlen(const char *s)</span></a>
+<a class="sourceLine" id="cb5-21" title="21">|       :<span class="bn">   0x000009d7      </span><span class="bu">sub</span>  <span class="kw">rax</span>, <span class="dv">1</span></a>
+<a class="sourceLine" id="cb5-22" title="22">|       :<span class="bn">   0x000009db      </span><span class="bu">cmp</span>  <span class="kw">rbx</span>, <span class="kw">rax</span></a>
+<a class="sourceLine" id="cb5-23" title="23">|       `=&lt;<span class="bn"> 0x000009de      </span><span class="bu">jb</span><span class="bn">   0x981</span></a>
+<a class="sourceLine" id="cb5-24" title="24">|<span class="bn">           0x000009e0      </span><span class="bu">lea</span>  <span class="kw">rdi</span>, <span class="bu">str</span>.Successful_Login <span class="co">; 0xaf3 ; &quot;[+] Successful Login&quot; ; const char *s</span></a>
+<a class="sourceLine" id="cb5-25" title="25">|<span class="bn">           0x000009e7      </span><span class="bu">call</span> sym.imp.puts <span class="co">; int puts(const char *s)</span></a></code></pre></div>
+<p>写出对应的 C 语言代码如下：</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb6-1" title="1"><span class="dt">char</span>* str = <span class="st">&quot;h_bO}EcDOR+G)uh(jl,vL&quot;</span>; <span class="co">// 上面初始化好的字符串</span></a>
+<a class="sourceLine" id="cb6-2" title="2"></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">// 下面的 k &lt; strlen(str) 在汇编代码中实际上写的是 k &lt; strlen(str) - 1</span></a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="co">// 通过调试发现，由于在 str 时没有赋值字符串结尾的 &#39;\0&#39;，导致字符串的实际长度要比</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="co">// &quot;h_bO}EcDOR+G)uh(jl,vL&quot; 长一个字节。</span></a>
+<a class="sourceLine" id="cb6-6" title="6"><span class="cf">for</span> (<span class="dt">int</span> k = <span class="dv">0</span>; k &lt; strlen(str); k++)</a>
+<a class="sourceLine" id="cb6-7" title="7">{</a>
+<a class="sourceLine" id="cb6-8" title="8">    <span class="cf">if</span> (str[k] != local_80[k])</a>
+<a class="sourceLine" id="cb6-9" title="9">    {</a>
+<a class="sourceLine" id="cb6-10" title="10">        puts(<span class="st">&quot;WrongPassword&quot;</span>);</a>
+<a class="sourceLine" id="cb6-11" title="11">        exit(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb6-12" title="12">    }</a>
+<a class="sourceLine" id="cb6-13" title="13">}</a>
+<a class="sourceLine" id="cb6-14" title="14"></a>
+<a class="sourceLine" id="cb6-15" title="15">puts(<span class="st">&quot;Successful Login&quot;</span>);</a></code></pre></div>
+<p>只是很简单的比较。因此我们将<code>h_bO}EcDOR+G)uh(jl,vL</code>的前半段与 0x10 异或，后半段与 0x18 异或：</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb7-1" title="1">[<span class="bu">chr</span>(xor(<span class="bu">ord</span>(c), <span class="bn">0x10</span>)) <span class="cf">for</span> c <span class="kw">in</span> <span class="st">&quot;h_b0}EcDOR&quot;</span>]</a>
+<a class="sourceLine" id="cb7-2" title="2">[<span class="bu">chr</span>(xor(<span class="bu">ord</span>(c), <span class="bn">0x18</span>)) <span class="cf">for</span> c <span class="kw">in</span> <span class="st">&quot;+G)uh(jl,vL&quot;</span>]</a></code></pre></div>
+<p>这样就能够得到 flag 了。</p>
+</div>
+</div>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

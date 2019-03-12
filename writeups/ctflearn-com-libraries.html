@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Libraries | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Libraries" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="这道题与 Java 及 JNI 有关。登录到主机后，看一下目录：" />
+<meta property="og:description" content="这道题与 Java 及 JNI 有关。登录到主机后，看一下目录：" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/writeups/ctflearn-com-libraries.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/writeups/ctflearn-com-libraries.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-10T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"这道题与 Java 及 JNI 有关。登录到主机后，看一下目录：","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/writeups/ctflearn-com-libraries.html","headline":"Libraries","dateModified":"2019-02-10T00:00:00+00:00","datePublished":"2019-02-10T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/writeups/ctflearn-com-libraries.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action active" href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2013-rop-4.html">
+                <h6><strong>ROP 4</strong></h6>
+                <span class="font-weight-light"><p>这道题是 PicoCTF 2013 ROP 系列的最后一题：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>Libraries</h1>
+<span class="d-block"><small>发布日期：2019年02月10日</small></span>
+<span class="d-block"><small>类别：pwn</small></span>
+
+<span class="d-block">
+    <small>题目来源：ctflearn.com</small>
+</span>
+
+
+<span class="d-block">
+    <small>题目链接：<a href="https://ctflearn.com/problems/393" target="_blank">https://ctflearn.com/problems/393</a>
+
+        (需要注册登录)
+
+    </small>
+</span>
+
+
+<hr />
+<p>这道题与 Java 及 JNI 有关。登录到主机后，看一下目录：</p>
+<p><img src="/assets/local/posts/ctflearn-com-libraries/dir.png" alt="dir" /></p>
+<p>flag 仍然存放在 flag.txt 中，并且提供了源代码。</p>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>这道题的主要问题部分在 <code>Helloworld.java</code> 中：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource java numberLines"><code class="sourceCode java"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">public</span> <span class="kw">class</span> Helloworld</a>
+<a class="sourceLine" id="cb1-2" title="2">{</a>
+<a class="sourceLine" id="cb1-3" title="3">    <span class="dt">static</span></a>
+<a class="sourceLine" id="cb1-4" title="4">    {</a>
+<a class="sourceLine" id="cb1-5" title="5">        <span class="kw">try</span></a>
+<a class="sourceLine" id="cb1-6" title="6">        {</a>
+<a class="sourceLine" id="cb1-7" title="7">            <span class="fu">loadingLibrary</span>();</a>
+<a class="sourceLine" id="cb1-8" title="8">        }</a>
+<a class="sourceLine" id="cb1-9" title="9">        <span class="kw">catch</span> (<span class="bu">Exception</span> e)</a>
+<a class="sourceLine" id="cb1-10" title="10">        {</a>
+<a class="sourceLine" id="cb1-11" title="11">            <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;Unable to load library...&quot;</span>);</a>
+<a class="sourceLine" id="cb1-12" title="12">        }</a>
+<a class="sourceLine" id="cb1-13" title="13">    }</a>
+<a class="sourceLine" id="cb1-14" title="14"></a>
+<a class="sourceLine" id="cb1-15" title="15">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">sayHello</span>(<span class="bu">String</span> flag) <span class="kw">throws</span> <span class="bu">Exception</span></a>
+<a class="sourceLine" id="cb1-16" title="16">    {</a>
+<a class="sourceLine" id="cb1-17" title="17">        <span class="bu">String</span> msg = <span class="st">&quot;Hello World from JNI!&quot;</span>;</a>
+<a class="sourceLine" id="cb1-18" title="18">        <span class="fu">print</span>(msg);</a>
+<a class="sourceLine" id="cb1-19" title="19">        <span class="kw">if</span> (msg.<span class="fu">contains</span>(<span class="st">&quot;flag&quot;</span>))</a>
+<a class="sourceLine" id="cb1-20" title="20">        {</a>
+<a class="sourceLine" id="cb1-21" title="21">            <span class="co">//What just happened?</span></a>
+<a class="sourceLine" id="cb1-22" title="22">            <span class="fu">print</span>(<span class="st">&quot;What the flag? How did that happen...&quot;</span>);</a>
+<a class="sourceLine" id="cb1-23" title="23">            <span class="fu">print</span>(<span class="st">&quot;Your flag is: &quot;</span> + flag);</a>
+<a class="sourceLine" id="cb1-24" title="24">        }</a>
+<a class="sourceLine" id="cb1-25" title="25">    }</a>
+<a class="sourceLine" id="cb1-26" title="26"></a>
+<a class="sourceLine" id="cb1-27" title="27">    <span class="co">/**</span></a>
+<a class="sourceLine" id="cb1-28" title="28">    <span class="co">*</span> Loads the helloworld library into java<span class="co">.</span></a>
+<a class="sourceLine" id="cb1-29" title="29">    <span class="co">*/</span></a>
+<a class="sourceLine" id="cb1-30" title="30">    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">loadingLibrary</span>() <span class="kw">throws</span> <span class="bu">Exception</span></a>
+<a class="sourceLine" id="cb1-31" title="31">    {</a>
+<a class="sourceLine" id="cb1-32" title="32">        Path libFolder = Paths.<span class="fu">get</span>(<span class="bu">System</span>.<span class="fu">getProperty</span>(<span class="st">&quot;user.home&quot;</span>), <span class="st">&quot;.helloWorld&quot;</span>);</a>
+<a class="sourceLine" id="cb1-33" title="33"></a>
+<a class="sourceLine" id="cb1-34" title="34">        <span class="co">//Create user folder to copy libraries from jar file.</span></a>
+<a class="sourceLine" id="cb1-35" title="35">        <span class="kw">if</span> (!Files.<span class="fu">exists</span>(libFolder))</a>
+<a class="sourceLine" id="cb1-36" title="36">            Files.<span class="fu">createDirectory</span>(libFolder);</a>
+<a class="sourceLine" id="cb1-37" title="37"></a>
+<a class="sourceLine" id="cb1-38" title="38">        <span class="co">//Copy library from jar file into user folder</span></a>
+<a class="sourceLine" id="cb1-39" title="39">        Path libDest = libFolder.<span class="fu">resolve</span>(<span class="st">&quot;libhello.so&quot;</span>);</a>
+<a class="sourceLine" id="cb1-40" title="40">        <span class="kw">try</span></a>
+<a class="sourceLine" id="cb1-41" title="41">        {</a>
+<a class="sourceLine" id="cb1-42" title="42">        <span class="co">//Copy libhello if not already there.</span></a>
+<a class="sourceLine" id="cb1-43" title="43">            Files.<span class="fu">copy</span>(<span class="bu">ClassLoader</span>.<span class="fu">getSystemResourceAsStream</span>(<span class="st">&quot;libhello.so&quot;</span>), libDest);</a>
+<a class="sourceLine" id="cb1-44" title="44">        }</a>
+<a class="sourceLine" id="cb1-45" title="45">        <span class="kw">catch</span> (<span class="bu">Exception</span> e)</a>
+<a class="sourceLine" id="cb1-46" title="46">        {</a>
+<a class="sourceLine" id="cb1-47" title="47">            <span class="co">//i don&#39;t know why this is throwing an error...</span></a>
+<a class="sourceLine" id="cb1-48" title="48">            <span class="co">//i think this fixes it...</span></a>
+<a class="sourceLine" id="cb1-49" title="49">        }</a>
+<a class="sourceLine" id="cb1-50" title="50"></a>
+<a class="sourceLine" id="cb1-51" title="51">        <span class="co">//Dynamically link to it.</span></a>
+<a class="sourceLine" id="cb1-52" title="52">        <span class="bu">System</span>.<span class="fu">load</span>(libDest.<span class="fu">toString</span>());</a>
+<a class="sourceLine" id="cb1-53" title="53">    }</a>
+<a class="sourceLine" id="cb1-54" title="54"></a>
+<a class="sourceLine" id="cb1-55" title="55">    <span class="co">/**</span></a>
+<a class="sourceLine" id="cb1-56" title="56">    <span class="co">*</span> This method prints out the message on standard output<span class="co">.</span></a>
+<a class="sourceLine" id="cb1-57" title="57">    <span class="co">*</span> <span class="an">@param msg </span>the message to print out<span class="co">.</span></a>
+<a class="sourceLine" id="cb1-58" title="58">    <span class="co">*/</span></a>
+<a class="sourceLine" id="cb1-59" title="59">    <span class="kw">private</span> <span class="dt">static</span> <span class="kw">native</span> <span class="dt">void</span> <span class="fu">print</span>(<span class="bu">String</span> msg);</a>
+<a class="sourceLine" id="cb1-60" title="60">}</a></code></pre></div>
+<p>首先我们关注到 19 行处，如果字符串 <code>msg</code> 中包含了“flag”，那么程序就会打印出真正的 flag。<code>msg</code> 本身是不包含“flag”的，但这段 Java 程序通过 JNI 调用了一个动态链接库的函数。看来我们需要从这个地方下手。</p>
+<p>同时注意到 43 行在拷贝自身资源中的动态链接库文件时，直接 catch 住了所有的异常，这意味着即使复制失败了，程序也会继续执行。再往上看几行，32 行处构造动态链接库目录时使用了 <code>user.home</code> 这一系统属性，而这个属性是可以从环境变量中注入的。至此思路大致就清晰了：首先我们需要传入一个自定义的 <code>user.home</code> 路径，其中包含了我们自己的 <code>libhello.so</code>，进而在 <code>print</code> 函数中修改字符串的值。</p>
+<p>那么如何设置 <code>user.home</code> 呢？首先想到的是在 Java 虚拟机启动时使用命令行参数传入。但是由于在程序入口 <code>hellotest.cpp</code> 中固定了传入虚拟机参数，我们无法使用这种方法：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource cpp numberLines"><code class="sourceCode cpp"><a class="sourceLine" id="cb2-1" title="1">    JavaVMOption* options = <span class="kw">new</span> JavaVMOption[<span class="dv">1</span>];</a>
+<a class="sourceLine" id="cb2-2" title="2">    options[<span class="dv">0</span>].optionString = (<span class="dt">char</span>*)<span class="st">&quot;-Djava.class.path=/home/lib/Helloworld.jar&quot;</span>;</a>
+<a class="sourceLine" id="cb2-3" title="3">    vm_args.version = JNI_VERSION_1_6;</a>
+<a class="sourceLine" id="cb2-4" title="4">    vm_args.nOptions = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb2-5" title="5">    vm_args.options = options;</a>
+<a class="sourceLine" id="cb2-6" title="6">    vm_args.ignoreUnrecognized = <span class="kw">false</span>;</a></code></pre></div>
+<p>但除了直接通过命令行参数的方式将属性传给 Java 虚拟机，我们还有另一种传入属性的方法：<code>_JAVA_OPTIONS</code> 环境变量。我们只需要在这个环境变量中写好虚拟机的参数，与直接通过命令行参数传入是一样的。因此只需使用</p>
+<pre><code>_JAVA_OPTIONS=-Duser.home=/tmp/test ./hellotest</code></pre>
+<p>启动程序就可以了。此时程序会输出 <code>Picked up _JAVA_OPTIONS: -Duser.home=/tmp/test</code>，这就表示我们成功地将 <code>user.home</code> 改为 <code>/tmp/test</code>了。</p>
+<p>下一步就是设计我们自己的 <code>libhello.so</code>。首先看一下原版的 <code>hellolib.c</code> 的内容：</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb4-1" title="1"><span class="pp">#include </span><span class="im">&lt;jni.h&gt;</span></a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="pp">#include </span><span class="im">&quot;Helloworld.h&quot;</span></a>
+<a class="sourceLine" id="cb4-5" title="5"></a>
+<a class="sourceLine" id="cb4-6" title="6">JNIEXPORT <span class="dt">void</span> JNICALL Java_Helloworld_print</a>
+<a class="sourceLine" id="cb4-7" title="7">  (JNIEnv* env, jclass cls, jstring msg)</a>
+<a class="sourceLine" id="cb4-8" title="8">{</a>
+<a class="sourceLine" id="cb4-9" title="9">    <span class="dt">const</span> <span class="dt">char</span>* str = (*env)-&gt;GetStringUTFChars(env, msg, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb4-10" title="10">    printf(<span class="st">&quot;%s</span><span class="sc">\n</span><span class="st">&quot;</span>, str);</a>
+<a class="sourceLine" id="cb4-11" title="11">    <span class="cf">if</span> (str)</a>
+<a class="sourceLine" id="cb4-12" title="12">        (*env)-&gt;ReleaseStringUTFChars(env, msg, str);</a>
+<a class="sourceLine" id="cb4-13" title="13">    fflush(stdout);</a>
+<a class="sourceLine" id="cb4-14" title="14">}</a></code></pre></div>
+<p>OK，就是打印出传入的字符串。下面我们需要通过反射把 <code>msg</code> 的内容改变：</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb5-1" title="1">JNIEXPORT <span class="dt">void</span> JNICALL Java_Helloworld_print</a>
+<a class="sourceLine" id="cb5-2" title="2">  (JNIEnv* env, jclass cls, jstring msg)</a>
+<a class="sourceLine" id="cb5-3" title="3">{</a>
+<a class="sourceLine" id="cb5-4" title="4">    <span class="dt">const</span> <span class="dt">char</span>* str = (*env)-&gt;GetStringUTFChars(env, msg, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb5-5" title="5">    printf(<span class="st">&quot;%s</span><span class="sc">\n</span><span class="st">&quot;</span>, str);</a>
+<a class="sourceLine" id="cb5-6" title="6">    <span class="cf">if</span> (str)</a>
+<a class="sourceLine" id="cb5-7" title="7">        (*env)-&gt;ReleaseStringUTFChars(env, msg, str);</a>
+<a class="sourceLine" id="cb5-8" title="8">    fflush(stdout);</a>
+<a class="sourceLine" id="cb5-9" title="9"></a>
+<a class="sourceLine" id="cb5-10" title="10">    <span class="co">// 通过反射修改字符串的内容</span></a>
+<a class="sourceLine" id="cb5-11" title="11">    jclass c = (*env)-&gt;GetObjectClass(env, msg);</a>
+<a class="sourceLine" id="cb5-12" title="12">    jcharArray flag = (*env)-&gt;NewCharArray(env, <span class="dv">4</span>); </a>
+<a class="sourceLine" id="cb5-13" title="13">    jchar* bytes = (*env)-&gt;GetCharArrayElements(env, flag, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb5-14" title="14">    bytes[<span class="dv">0</span>] = <span class="ch">&#39;f&#39;</span>;</a>
+<a class="sourceLine" id="cb5-15" title="15">    bytes[<span class="dv">1</span>] = <span class="ch">&#39;l&#39;</span>;</a>
+<a class="sourceLine" id="cb5-16" title="16">    bytes[<span class="dv">2</span>] = <span class="ch">&#39;a&#39;</span>;</a>
+<a class="sourceLine" id="cb5-17" title="17">    bytes[<span class="dv">3</span>] = <span class="ch">&#39;g&#39;</span>;</a>
+<a class="sourceLine" id="cb5-18" title="18">    (*env)-&gt;SetCharArrayRegion(env, flag, <span class="dv">0</span>, <span class="dv">4</span>, bytes);</a>
+<a class="sourceLine" id="cb5-19" title="19"></a>
+<a class="sourceLine" id="cb5-20" title="20">    <span class="co">// 找到 String 类中的 value 成员</span></a>
+<a class="sourceLine" id="cb5-21" title="21">    jfieldID field_id = (*env)-&gt;GetFieldID(env, c, <span class="st">&quot;value&quot;</span>, <span class="st">&quot;[C&quot;</span>);</a>
+<a class="sourceLine" id="cb5-22" title="22">    (*env)-&gt;SetObjectField(env, msg, field_id, flag);</a>
+<a class="sourceLine" id="cb5-23" title="23">}</a></code></pre></div>
+<p>将我们自己编译生成出的 <code>libhello.so</code> 放入 <code>/tmp/test/.helloWorld/</code> 目录中，并使用 <code>chmod -wx</code> 将文件权限设为只读，这样才不会被 <code>Helloworld.java</code> 中的 <code>File.copy</code> 所覆盖。</p>
+<p>执行一下 <code>_JAVA_OPTIONS=-Duser.home=/tmp/test ./hellotest</code>，程序就能够成功打印出 flag 了。</p>
+</div>
+</div>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

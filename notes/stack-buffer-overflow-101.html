@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>栈缓冲区溢出 101 | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="栈缓冲区溢出 101" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="由于函数调用的自然特性，同时为了支持函数的递归调用，我们通常使用栈来保存函数局部信息的数据结构。例如，对于下面的 C 语言程序：" />
+<meta property="og:description" content="由于函数调用的自然特性，同时为了支持函数的递归调用，我们通常使用栈来保存函数局部信息的数据结构。例如，对于下面的 C 语言程序：" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-101.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-101.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-07T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"由于函数调用的自然特性，同时为了支持函数的递归调用，我们通常使用栈来保存函数局部信息的数据结构。例如，对于下面的 C 语言程序：","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/notes/stack-buffer-overflow-101.html","headline":"栈缓冲区溢出 101","dateModified":"2019-02-07T00:00:00+00:00","datePublished":"2019-02-07T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/notes/stack-buffer-overflow-101.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action " href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action active" href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2013-rop-4.html">
+                <h6><strong>ROP 4</strong></h6>
+                <span class="font-weight-light"><p>这道题是 PicoCTF 2013 ROP 系列的最后一题：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>栈缓冲区溢出 101</h1>
+<span class="d-block"><small>发布日期：2019年02月07日</small></span>
+<span class="d-block"><small>类别：binary</small></span>
+
+
+
+<hr />
+<p>由于函数调用的自然特性，同时为了支持函数的递归调用，我们通常使用栈来保存函数局部信息的数据结构。例如，对于下面的 C 语言程序：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb1-1" title="1"><span class="dt">int</span> func2()</a>
+<a class="sourceLine" id="cb1-2" title="2">{</a>
+<a class="sourceLine" id="cb1-3" title="3">    <span class="dt">int</span> c = <span class="dv">2</span>;</a>
+<a class="sourceLine" id="cb1-4" title="4">    <span class="cf">return</span> c;</a>
+<a class="sourceLine" id="cb1-5" title="5">}</a>
+<a class="sourceLine" id="cb1-6" title="6"></a>
+<a class="sourceLine" id="cb1-7" title="7"><span class="dt">int</span> func1(<span class="dt">int</span> val)</a>
+<a class="sourceLine" id="cb1-8" title="8">{</a>
+<a class="sourceLine" id="cb1-9" title="9">    <span class="dt">int</span> b = func2();</a>
+<a class="sourceLine" id="cb1-10" title="10">    <span class="cf">return</span> b + val;</a>
+<a class="sourceLine" id="cb1-11" title="11">}</a>
+<a class="sourceLine" id="cb1-12" title="12"></a>
+<a class="sourceLine" id="cb1-13" title="13"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span>* argv[])</a>
+<a class="sourceLine" id="cb1-14" title="14">{</a>
+<a class="sourceLine" id="cb1-15" title="15">    <span class="dt">int</span> a = func1(<span class="dv">42</span>);</a>
+<a class="sourceLine" id="cb1-16" title="16">    printf(<span class="st">&quot;%d</span><span class="sc">\n</span><span class="st">&quot;</span>, a);</a>
+<a class="sourceLine" id="cb1-17" title="17">    <span class="cf">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb1-18" title="18">}</a></code></pre></div>
+<div class='graphviz'>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generated by graphviz version 2.36.0 (20140111.2315)
+ -->
+<!-- Title: g Pages: 1 -->
+<svg width="428pt" height="139pt" viewBox="0.00 0.00 428.00 138.50" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 134.5)">
+<title>
+g
+</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-134.5 424,-134.5 424,4 -4,4"/> <!-- main --> <g id="node1" class="node">
+<title>
+main
+</title>
+<polygon fill="none" stroke="black" points="58,-32 58,-101 172,-101 172,-32 58,-32"/> <text text-anchor="middle" x="115" y="-85.8" font-family="Times,serif" font-size="14.00">int a = func1(42);</text> <polyline fill="none" stroke="black" points="58,-78 172,-78 "/> <text text-anchor="middle" x="115" y="-62.8" font-family="Times,serif" font-size="14.00">printf(“%d”, a);</text> <polyline fill="none" stroke="black" points="58,-55 172,-55 "/> <text text-anchor="middle" x="115" y="-39.8" font-family="Times,serif" font-size="14.00">return 0;</text> <text text-anchor="middle" x="29" y="-20.3" font-family="Times,serif" font-size="14.00">main 函数</text> </g> <!-- func1 --> <g id="node2" class="node">
+<title>
+func1
+</title>
+<polygon fill="none" stroke="black" points="210.5,-80.5 210.5,-126.5 311.5,-126.5 311.5,-80.5 210.5,-80.5"/> <text text-anchor="middle" x="261" y="-111.3" font-family="Times,serif" font-size="14.00">int b = func2();</text> <polyline fill="none" stroke="black" points="210.5,-103.5 311.5,-103.5 "/> <text text-anchor="middle" x="261" y="-88.3" font-family="Times,serif" font-size="14.00">return b + val;</text> <text text-anchor="middle" x="281" y="-68.8" font-family="Times,serif" font-size="14.00">func1 函数</text> </g> <!-- main&#45;&gt;func1 --> <g id="edge1" class="edge">
+<title>
+main:f0-&gt;func1:f0
+</title>
+<path fill="none" stroke="black" d="M172,-89.5C188.467,-89.5 189.787,-106.336 200.338,-112.912"/> <polygon fill="black" stroke="black" points="199.435,-116.293 210,-115.5 201.246,-109.532 199.435,-116.293"/> </g> <!-- printf --> <g id="node4" class="node">
+<title>
+printf
+</title>
+<polygon fill="none" stroke="black" points="234,-15.5 234,-61.5 288,-61.5 288,-15.5 234,-15.5"/> <text text-anchor="middle" x="261" y="-46.3" font-family="Times,serif" font-size="14.00">…</text> <polyline fill="none" stroke="black" points="234,-38.5 288,-38.5 "/> <text text-anchor="middle" x="261" y="-23.3" font-family="Times,serif" font-size="14.00">…</text> <text text-anchor="middle" x="204" y="-3.8" font-family="Times,serif" font-size="14.00">printf 函数</text> </g> <!-- main&#45;&gt;printf --> <g id="edge5" class="edge">
+<title>
+main:f1-&gt;printf:f0
+</title>
+<path fill="none" stroke="black" d="M172,-66.5C196.306,-66.5 203.251,-54.4678 222.946,-51.2717"/> <polygon fill="black" stroke="black" points="223.297,-54.7551 233,-50.5 222.761,-47.7757 223.297,-54.7551"/> </g> <!-- func1&#45;&gt;main --> <g id="edge4" class="edge">
+<title>
+func1:f1-&gt;main:f1
+</title>
+<path fill="none" stroke="black" d="M210,-91.5C193.89,-91.5 192.162,-75.6248 181.895,-69.1754"/> <polygon fill="black" stroke="black" points="182.567,-65.7314 172,-66.5 180.74,-72.4888 182.567,-65.7314"/> </g> <!-- func2 --> <g id="node3" class="node">
+<title>
+func2
+</title>
+<polygon fill="none" stroke="black" points="352.5,-80.5 352.5,-126.5 419.5,-126.5 419.5,-80.5 352.5,-80.5"/> <text text-anchor="middle" x="386" y="-111.3" font-family="Times,serif" font-size="14.00">int c = 2;</text> <polyline fill="none" stroke="black" points="352.5,-103.5 419.5,-103.5 "/> <text text-anchor="middle" x="386" y="-88.3" font-family="Times,serif" font-size="14.00">return c;</text> <text text-anchor="middle" x="389" y="-68.8" font-family="Times,serif" font-size="14.00">func2 函数</text> </g> <!-- func1&#45;&gt;func2 --> <g id="edge2" class="edge">
+<title>
+func1:f0-&gt;func2:f0
+</title>
+<path fill="none" stroke="black" d="M312,-115.5C325.889,-115.5 331.64,-115.5 341.968,-115.5"/> <polygon fill="black" stroke="black" points="342,-119 352,-115.5 342,-112 342,-119"/> <text text-anchor="middle" x="332" y="-119.3" font-family="Times,serif" font-size="14.00"> </text> </g> <!-- func2&#45;&gt;func1 --> <g id="edge3" class="edge">
+<title>
+func2:f1-&gt;func1:f1
+</title>
+<path fill="none" stroke="black" d="M352,-91.5C338.111,-91.5 332.36,-91.5 322.032,-91.5"/> <polygon fill="black" stroke="black" points="322,-88.0001 312,-91.5 322,-95.0001 322,-88.0001"/> <text text-anchor="middle" x="332" y="-95.3" font-family="Times,serif" font-size="14.00"> </text> </g> <!-- printf&#45;&gt;main --> <g id="edge6" class="edge">
+<title>
+printf:f1-&gt;main:f2
+</title>
+<path fill="none" stroke="black" d="M233,-26.5C208.594,-26.5 201.809,-39.2842 182.084,-42.6801"/> <polygon fill="black" stroke="black" points="181.683,-39.2009 172,-43.5 182.251,-46.1779 181.683,-39.2009"/> </g> </g>
+</svg>
+</div>
+<p>当 <code>main</code> 调用 <code>func1</code> 时，我们需要一块内存来存放 <code>func1</code> 的局部变量和参数等信息；当 <code>func1</code> 调用 <code>func2</code> 时，还需要一块内存来存放 <code>func2</code> 的局部信息；而 <code>func2</code> 返回时，<code>func2</code> 的局部信息就不再使用可以丢弃了；而当 <code>func1</code> 返回时，用来存放 <code>func1</code> 的内存也不再需要了。这是一种典型的先进后出的情况，比较适合使用栈来描述：</p>
+<p><img src="/assets/local/posts/stack-buffer-overflow-101/stack1.gif" alt="stack1" /></p>
+<h4 id="栈帧">栈帧</h4>
+<p>上图中，每一个函数的局部信息所占据的栈空间就是一个栈帧（Stack Frame）。具体来说，一个栈帧的内容包括传递给函数的参数、函数的局部变量、调用函数后需需要跳转的地址、以及其他需要暂存的信息（例如寄存器的值）。以上面的程序为例，在 x86 平台上，进入 <code>func2</code> 函数后，一种可能的情况如下：</p>
+<p><img src="/assets/local/posts/stack-buffer-overflow-101/func2_stackframes.png" alt="func2_stackframes" /></p>
+<p>通常来说，函数的执行中可能会不断地压入、弹出数据，栈顶指针（sp）就会不断地变化，因此栈帧的信息通常使用栈基址指针（bp）寄存器进行索引。从图中可以看出，bp 所指向的并不是栈帧的底部。bp 下方存放的是返回地址和函数的参数；bp 上方存放的是局部变量和其它临时信息。返回地址指明了函数返回后继续执行的位置，通常都是函数调用的下一条指令。</p>
+<div class="alert alert-light border-info" markdown="1">
+<h5><i class="fas fa-exclamation"></i> Notes</h5>
+<p>一个函数的栈帧数据也有可能会使用 sp 进行索引，从而无需修改 bp 的值，也不需要将上层函数栈帧的基地址保存在栈中。</p>
+</div>
+<p>bp 寄存器中存储的为当前栈帧的基地址。当一个函数被调用时，就将上一个函数栈帧的基地址（即bp）压入内存，再把 bp 的值设置为自己的栈帧的基地址；当它返回时，就把 bp 的内容恢复为上一个函数的栈帧基地址。如此一来，bp 所指向的地址中的内容即为上一个栈帧的基地址；而上一个栈帧的基地址处存放的内容是更上一个栈帧的基地址……</p>
+<h4 id="栈缓冲区溢出">栈缓冲区溢出</h4>
+<p>当我们在栈上开辟了一段空间（例如一个局部变量数组）用作缓冲区时，如果没有对放入缓冲区的数据长度进行限制，就有有可能会发生缓冲区溢出。溢出后的直接后果就是将当前局部变量下方的内存内容进行了覆盖——例如覆盖了其他的局部变量、覆盖了上一个栈帧的基地址、或是覆盖了当前函数的返回地址，从而导致程序的执行出现问题或是崩溃。如果缓冲区的内容是被攻击者精心设计过的，程序就可能会去执行不该执行的逻辑，甚至会执行由攻击者提供的指令。</p>
+<p>想要改变程序的执行流程，就需要改变那些能够影响程序执行的数据。返回地址是最典型的会影响执行流程的数据之一。如果我们将返回地址覆盖为其它地址，当函数返回时，程序就会跳转至我们设定好的地址上。例如，这段程序：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="cb2-1" title="1"><span class="dt">int</span> func()</a>
+<a class="sourceLine" id="cb2-2" title="2">{</a>
+<a class="sourceLine" id="cb2-3" title="3">    <span class="dt">char</span> s[<span class="dv">8</span>];</a>
+<a class="sourceLine" id="cb2-4" title="4">    gets(s);</a>
+<a class="sourceLine" id="cb2-5" title="5">}</a></code></pre></div>
+<p>下图分别展示了输入“abcdefg”和输入“abcdefghijklmnopqrs”时的情况。可以看到，返回地址被其中几个字符<code>mnop</code>所覆盖。只要把这几个字符换成我们需要跳转的地址，即可让函数返回时跳转过去。</p>
+<p><img src="/assets/local/posts/stack-buffer-overflow-101/stack-buffer-overflow.png" alt="stack-buffer-overflow" /></p>
+<p>除了返回地址，我们还可以：</p>
+<ul>
+<li>覆盖 C++ 对象的虚表指针，让对象的虚表指针指向一个我们设计好的虚表上去。这样当这个 C++ 对象被多态地调用时，就会去查找我们设定好的虚表，进而执行我们需要的指令。</li>
+<li>覆盖 Windows SEH 异常处理指针，当函数中发生异常时，就可以跳转到我们设定好的处理函数中去。</li>
+</ul>
+<h4 id="跳转至缓冲区">跳转至缓冲区</h4>
+<p>由于我们可以让函数返回时跳转至任意地址，因此也可以在缓冲区中填放任意指令，再使函数返回至缓冲区内继续执行。这样就可以执行我们所需要的任意指令了。</p>
+<h4 id="栈缓冲溢出防护措施">栈缓冲溢出防护措施</h4>
+<ul>
+<li>随机化栈地址、动态库地址（地址空间布局随机化）
+<div>
+<a href='/notes/stack-buffer-overflow-aslr.html'>
+<div class="alert alert-success">
+<i class='fas fa-pencil-alt'></i> 相关笔记：栈缓冲区溢出之二 ASLR
+</div>
+</a>
+</div></li>
+<li>栈溢出检测
+<div>
+<a href='/notes/stack-buffer-overflow-canary.html'>
+<div class="alert alert-success">
+<i class='fas fa-pencil-alt'></i> 相关笔记：栈缓冲区溢出之三 Security Cookie / Canary
+</div>
+</a>
+</div></li>
+<li>拒绝在栈中执行指令（数据执行保护）</li>
+<li>当 SEH 异常处理函数被触发时，Windows 会拒绝跳转至栈中的地址</li>
+</ul>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

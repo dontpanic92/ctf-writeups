@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>栈缓冲区溢出之三 Security Cookie / Canary | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="栈缓冲区溢出之三 Security Cookie / Canary" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。" />
+<meta property="og:description" content="当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-28T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html","headline":"栈缓冲区溢出之三 Security Cookie / Canary","dateModified":"2019-02-28T00:00:00+00:00","datePublished":"2019-02-28T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/notes/stack-buffer-overflow-canary.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action " href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action active" href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2013-rop-4.html">
+                <h6><strong>ROP 4</strong></h6>
+                <span class="font-weight-light"><p>这道题是 PicoCTF 2013 ROP 系列的最后一题：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>栈缓冲区溢出之三 Security Cookie / Canary</h1>
+<span class="d-block"><small>发布日期：2019年02月28日</small></span>
+<span class="d-block"><small>类别：binary</small></span>
+
+
+
+<hr />
+<p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+<p>当栈溢出发生时，常见的获取控制流的手段就是覆盖函数的返回地址：</p>
+<p><img src="/assets/local/posts/stack-buffer-overflow-101/stack-buffer-overflow.png" alt="stack-buffer-overflow" /></p>
+<p>那么如何才能够检测到返回地址是否被覆盖了呢？从上图我们可以看到，如果需要覆盖返回地址，攻击者必须覆盖掉从缓冲区开始一直到返回地址之间的所有内容，包括其他的局部变量和 BP。Security Cookie 的思想是，在 BP 之上压入一个随机产生的数，如果缓冲区溢出后覆盖了返回地址，那么则一定会覆盖掉 Security Cookie：</p>
+<p><img src="/assets/local/posts/stack-buffer-overflow-canary/canary.png" alt="canary" /></p>
+<p>与此同时，在栈空间之外，还保存有一份 Security Cookie。在函数返回之前，只需要检查栈上的 Cookie 跟全局的 Cookie 是否一致即可，如果不一致则说明已经发生了溢出。</p>
+<p>不过，做这些额外的工作会对程序性能产生影响。因此，默认情况下 MSVC 和 GCC 不会对所有的函数栈帧进行保护，而是选择那些明显存在安全隐患的函数进行保护。</p>
+<h2 id="gcc-的--fstack-protector-编译选项">GCC 的 <code>-fstack-protector</code> 编译选项</h2>
+<p><code>-fstack-protector</code> 选项并不会对所有的函数加以保护。它只会为：</p>
+<ul>
+<li>调用了 <a href="https://linux.die.net/man/3/alloca"><code>alloca</code></a> 的函数</li>
+<li>存在超过 8 个字节的缓冲区的函数</li>
+</ul>
+<p>添加栈溢出保护。与之类似的还有两个选项：<code>-fstack-protector-strong</code> 和 <code>-fstack-protector-all</code>。<code>-fstack-protector-strong</code> 属于加强版本，它除了上面两类函数，它还会为：</p>
+<ul>
+<li>定义了局部数组的函数</li>
+<li>持有局部栈地址的函数</li>
+</ul>
+<p>添加保护。<code>-fstack-protector-all</code> 一眼便知，它会为所有函数都添加栈溢出保护。</p>
+<p>另外还有一个编译选项 <code>-fstack-protector-explicit</code>，它则表示这项功能默认关闭，只对那些显式声明了 <code>stack_protect</code> 属性的函数添加保护。</p>
+<h2 id="msvc-的-gs-编译选项">MSVC 的 <code>/GS</code> 编译选项</h2>
+<p><code>/GS</code> 同样不会保护所有的函数，它只保护包含有“GS Buffer”的函数。所谓“GS Buffer”是指：</p>
+<ul>
+<li>大于 4 个字节的数组，并且数组的元素个数超过 2 个，同时元素的类型不是指针类型。或者，</li>
+<li>大于 8 个字节的数据结构，其中没有指针类型。或者，</li>
+<li>由 <code>_alloca</code> 申请的缓冲区。或者，</li>
+<li>任何包含 GS Buffer 的类或结构体。</li>
+</ul>
+<h2 id="绕过-security-cookie">绕过 Security Cookie</h2>
+<p>Security Cookie 通常难以绕过。但在某些特殊情况下，还是有绕过的可能：</p>
+<ul>
+<li>函数编写的不够谨慎，使得 <code>printf</code> 能够泄露出 Security Cookie 的值</li>
+<li>如果能够重复地溢出同一个进程（例如函数调用了 <code>fork</code>，使得原来的进程不会崩溃退出），则可以尝试暴力破解</li>
+</ul>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

