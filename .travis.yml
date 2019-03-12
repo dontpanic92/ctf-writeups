@@ -1,5 +1,9 @@
 language: ruby
 
+addons:
+  apt_packages:
+    - pandoc
+
 before_install:
   - gem install bundler
 
