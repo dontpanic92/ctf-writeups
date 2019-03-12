@@ -33,3 +33,4 @@ permalink: /tools/
 ##### 在线工具
 - [shellcode 集锦](http://shell-storm.org/shellcode/)
 - [Online Dis-/Assembler](http://shell-storm.org/online/Online-Assembler-and-Disassembler/)
+- [Linux Syscall Reference](https://syscalls.kernelgrok.com/)

@@ -9,6 +9,9 @@ categories: cheatsheets
 
 #### 运行
 
+- `gdb -p PID`
+    - Attach
+
 - `r program`
     - 运行 `program`
 
