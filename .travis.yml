@@ -1,5 +1,4 @@
 language: ruby
-dist: xenial
 sudo: true
 
 addons:
