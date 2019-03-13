@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="utf-8"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Replace | dontpan1c 的 CTF 笔记</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Replace" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="打开程序后弹出了一个对话框，文本框中似乎只能输入数字，输入错误的话程序会直接退出，有时还会崩溃：" />
+<meta property="og:description" content="打开程序后弹出了一个对话框，文本框中似乎只能输入数字，输入错误的话程序会直接退出，有时还会崩溃：" />
+<link rel="canonical" href="https://ctf.dontpanic.blog/writeups/reversing-kr-replace.html" />
+<meta property="og:url" content="https://ctf.dontpanic.blog/writeups/reversing-kr-replace.html" />
+<meta property="og:site_name" content="dontpan1c 的 CTF 笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-03-13T00:00:00+00:00" />
+<script type="application/ld+json">
+{"description":"打开程序后弹出了一个对话框，文本框中似乎只能输入数字，输入错误的话程序会直接退出，有时还会崩溃：","@type":"BlogPosting","url":"https://ctf.dontpanic.blog/writeups/reversing-kr-replace.html","headline":"Replace","dateModified":"2019-03-13T00:00:00+00:00","datePublished":"2019-03-13T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://ctf.dontpanic.blog/writeups/reversing-kr-replace.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/fontawesome.min.css">
+    <script src="/assets/js/index.js"></script>
+</head>
+
+<body>
+    <div class="d-flex flex-grow-1 flex-column h-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">dontpan1c 的 CTF 笔记</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+                aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarColor03">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog" target="_blank">博客</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://dontpanic.blog/about" target="_blank">关于</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav dp-navbar-right">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/dontpanic92/ctf-writeups" target="_blank">
+                            <i class="fab fa-github"></i><span>&nbsp;仓库</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/feed.xml" target="_blank">
+                            <i class="fas fa-rss"></i><span>&nbsp;订阅</span>
+                        </a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0" action="/search" method="GET">
+                    <input name="query" class="form-control mr-sm-2" type="text" placeholder="搜索">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">搜索</button>
+                </form>
+            </div>
+        </nav>
+        <div class="d-flex flex-grow-1 h-100 container pt-3 justify-content-center">
+            <div class="col-3">
+    <div class="list-group border-primary">
+        <a class="list-group-item list-group-item-action active" href="/">
+            <h6><strong>孤舟蓑笠翁</strong></h6>
+            <span class="font-weight-light">独钓寒江雪。CTF 解题报告</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/notes">
+            <h6><strong>温故而知新</strong></h6>
+            <span class="font-weight-light">可以为师矣。知识笔记</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/cheatsheets">
+            <h6><strong>愿君多采撷</strong></h6>
+            <span class="font-weight-light">此物最相思。Cheatsheets</span>
+        </a>
+        <a class="list-group-item list-group-item-action " href="/tools">
+            <h6><strong>工欲善其事</strong></h6>
+            <span class="font-weight-light">必先利其器。实用工具索引</span>
+        </a>
+        <!--a class="list-group-item list-group-item-action">
+            海内存知己
+        </a-->
+    </div>
+    <div class="card mt-5">
+        <div class="card-header">
+            近期发布
+        </div>
+        <div class="list-group list-group-flush">
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-replace.html">
+                <h6><strong>Replace</strong></h6>
+                <span class="font-weight-light"><p>打开程序后弹出了一个对话框，文本框中似乎只能输入数字，输入错误的话程序会直接退出，有时还会崩溃：</p>
+</span>
+                <small>2019年03月13日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/reversing-kr-easy-keygenme.html">
+                <h6><strong>Easy KeygenMe</strong></h6>
+                <span class="font-weight-light"><p>题目要求 Find the Name when the Serial is 5B134977135E7D13：</p>
+</span>
+                <small>2019年03月12日 | writeups | reversing</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/notes/stack-buffer-overflow-canary.html">
+                <h6><strong>栈缓冲区溢出之三 Security Cookie / Canary</strong></h6>
+                <span class="font-weight-light"><p>当栈溢出发生时，如果能够检测到栈溢出已经发生，就可以及时中止程序的执行，从而能够避免继续走攻击者安排好的路。Windows 上的 Security Cookie 就是这样一种机制。在 Linux 上，Canary 这个名字更常用。不论是 Security Cookie 还是 Canary，它们的原理都是相同的。</p>
+</span>
+                <small>2019年02月28日 | notes | binary</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-3.html">
+                <h6><strong>Buffer Overflow 3</strong></h6>
+                <span class="font-weight-light"><p>这道题模拟了栈溢出保护，但 canary 是固定的：</p>
+</span>
+                <small>2019年02月27日 | writeups | pwn</small>
+            </a>
+            
+            <a class="list-group-item list-group-item-action" href="/writeups/picoctf-2018-buffer-overflow-012.html">
+                <h6><strong>Buffer Overflow 0 / 1 / 2</strong></h6>
+                <span class="font-weight-light"><p>因为这几道题都比较简单，所以合并在一起了：</p>
+</span>
+                <small>2019年02月26日 | writeups | pwn</small>
+            </a>
+            
+        </div>
+    </div>
+</div>
+<div id="content" class="col-8 pl-4">
+    <h1>Replace</h1>
+<span class="d-block"><small>发布日期：2019年03月13日</small></span>
+<span class="d-block"><small>类别：reversing</small></span>
+
+<span class="d-block">
+    <small>题目来源：reversing.kr</small>
+</span>
+
+
+<span class="d-block">
+    <small>题目链接：<a href="http://reversing.kr/challenge.php" target="_blank">http://reversing.kr/challenge.php</a>
+
+    </small>
+</span>
+
+
+<hr />
+<p>打开程序后弹出了一个对话框，文本框中似乎只能输入数字，输入错误的话程序会直接退出，有时还会崩溃：</p>
+<p><img src="/assets/local/posts/reversing-kr-replace/dialog.jpg" alt="dialog" /></p>
+<div>
+<div id="writeup_show_button" style="cursor: pointer">
+    <div class="alert alert-warning">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处显示 Writeup</b>
+    </div>
+</div>
+<div id="writeup_hide_button" style="cursor: pointer" class="d-none">
+    <div class="alert alert-info">
+        <b><i class="fas fa-exclamation-circle"></i> 点击此处隐藏 Writeup</b>
+    </div>
+</div>
+<script>
+(function()
+{
+    var parent = document.scripts[document.scripts.length - 1].parentNode;
+    parent.querySelector("#writeup_show_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.remove("d-none");
+        parent.querySelector("#writeup_show_button").classList.add("d-none");
+        parent.querySelector("#writeup").classList.remove("d-none");
+    }
+    parent.querySelector("#writeup_hide_button").onclick = function ()
+    {
+        parent.querySelector("#writeup_hide_button").classList.add("d-none");
+        parent.querySelector("#writeup_show_button").classList.remove("d-none");
+        parent.querySelector("#writeup").classList.add("d-none");
+    }
+})();
+</script>
+<div id="writeup" class="d-none" markdown="1">
+<p>用 cutter 打开，查看一下字符串，发现一个“Correct!”。再查看一下交叉引用，能够看出这个函数应该是对话框的消息处理回调函数：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb1-1" title="1">|           <span class="bn">0x00401021</span>      mov ebp, esp</a>
+<a class="sourceLine" id="cb1-2" title="2">|           <span class="bn">0x00401023</span>      cmp dword [arg_ch], <span class="bn">0x111</span> ; [<span class="bn">0xc</span>:<span class="dv">4</span>]=-<span class="dv">1</span> ; <span class="dv">273</span></a>
+<a class="sourceLine" id="cb1-3" title="3">|       ,=&lt; <span class="bn">0x0040102a</span>      je <span class="bn">0x401032</span></a>
+<a class="sourceLine" id="cb1-4" title="4">|       |   <span class="bn">0x0040102c</span>      xor eax, eax</a>
+<a class="sourceLine" id="cb1-5" title="5">|       |   <span class="bn">0x0040102e</span>      pop ebp</a>
+<a class="sourceLine" id="cb1-6" title="6">|       |   <span class="bn">0x0040102f</span>      ret <span class="bn">0x10</span></a>
+<a class="sourceLine" id="cb1-7" title="7">|       `-&gt; <span class="bn">0x00401032</span>      mov eax, dword [arg_10h] ; [<span class="bn">0x10</span>:<span class="dv">4</span>]=-<span class="dv">1</span> ; <span class="dv">16</span></a>
+<a class="sourceLine" id="cb1-8" title="8">|           <span class="bn">0x00401035</span>      <span class="kw">and</span> eax, <span class="bn">0xffff</span></a>
+<a class="sourceLine" id="cb1-9" title="9">|           <span class="bn">0x0040103a</span>      sub eax, <span class="dv">2</span></a>
+<a class="sourceLine" id="cb1-10" title="10">|       ,=&lt; <span class="bn">0x0040103d</span>      je loc<span class="fl">.00401095</span></a>
+<a class="sourceLine" id="cb1-11" title="11">|       |   <span class="bn">0x0040103f</span>      sub eax, <span class="bn">0x3e9</span></a>
+<a class="sourceLine" id="cb1-12" title="12">|      ,==&lt; <span class="bn">0x00401044</span>      je <span class="bn">0x40104c</span></a>
+<a class="sourceLine" id="cb1-13" title="13">|      ||   <span class="bn">0x00401046</span>      xor eax, eax</a>
+<a class="sourceLine" id="cb1-14" title="14">|      ||   <span class="bn">0x00401048</span>      pop ebp</a>
+<a class="sourceLine" id="cb1-15" title="15">|      ||   <span class="bn">0x00401049</span>      ret <span class="bn">0x10</span></a>
+<a class="sourceLine" id="cb1-16" title="16">|      `--&gt; <span class="bn">0x0040104c</span>      push esi</a>
+<a class="sourceLine" id="cb1-17" title="17">|       |   <span class="bn">0x0040104d</span>      mov esi, dword [arg_8h] ; [<span class="bn">0x8</span>:<span class="dv">4</span>]=-<span class="dv">1</span> ; <span class="dv">8</span></a>
+<a class="sourceLine" id="cb1-18" title="18">|       |   <span class="bn">0x00401050</span>      push <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-19" title="19">|       |   <span class="bn">0x00401052</span>      push <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-20" title="20">|       |   <span class="bn">0x00401054</span>      push <span class="bn">0x3ea</span> ; <span class="dv">1002</span></a>
+<a class="sourceLine" id="cb1-21" title="21">|       |   <span class="bn">0x00401059</span>      push esi</a>
+<a class="sourceLine" id="cb1-22" title="22">|       |   <span class="bn">0x0040105a</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_GetDlgItemInt</span>] ; <span class="bn">0x40509c</span> ; <span class="st">&quot;`U&quot;</span></a>
+<a class="sourceLine" id="cb1-23" title="23">|       |   <span class="bn">0x00401060</span>      mov dword [<span class="bn">0x4084d0</span>], eax ; [<span class="bn">0x4084d0</span>:<span class="dv">4</span>]=<span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-24" title="24">|       |   <span class="bn">0x00401065</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
+<a class="sourceLine" id="cb1-25" title="25">|       |   <span class="bn">0x0040106a</span>      xor eax, eax</a>
+<a class="sourceLine" id="cb1-26" title="26">|      ,==&lt; <span class="bn">0x0040106c</span>      jmp loc<span class="fl">.00404690</span></a>
+<a class="sourceLine" id="cb1-27" title="27">|      ||   ;-- fcn<span class="fl">.00401071</span>:</a>
+<a class="sourceLine" id="cb1-28" title="28">\     ,===&lt; <span class="bn">0x00401071</span>      jmp loc<span class="fl">.00401084</span></a>
+<a class="sourceLine" id="cb1-29" title="29">      |||   <span class="bn">0x00401073</span>      push str.<span class="fu">Correct</span> ; <span class="bn">0x406034</span> ; <span class="st">&quot;Correct!&quot;</span></a>
+<a class="sourceLine" id="cb1-30" title="30">      |||   <span class="bn">0x00401078</span>      push <span class="bn">0x3e9</span> ; <span class="dv">1001</span></a>
+<a class="sourceLine" id="cb1-31" title="31">      |||   <span class="bn">0x0040107d</span>      push esi</a>
+<a class="sourceLine" id="cb1-32" title="32">      |||   <span class="bn">0x0040107e</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_SetDlgItemTextA</span>] ; <span class="bn">0x4050a0</span> ; <span class="st">&quot;NU&quot;</span></a></code></pre></div>
+<p>我们感兴趣的地方从 <code>0x0040105a</code> 这里开始。程序首先调用了 <code>GetDlgItemInt</code> 将文本框中的文本按照整数读出，将其存入 <code>0x004084d0</code>中，；而后又调用了一个函数，紧接着是两个 <code>jmp</code>。此时如果搜索下面压入“Correct”字符串处的地址 <code>0x00401073</code>，会发现并没有地方直接引用它，很奇怪。不管它了，还是先看一下 <code>fcn.0040466f</code> 处的函数吧：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb2-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">26</span></a>
+<a class="sourceLine" id="cb2-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
+<a class="sourceLine" id="cb2-3" title="3">|       :   <span class="bn">0x0040466f</span>      <span class="fu">call</span> <span class="bn">0x40467a</span></a>
+<a class="sourceLine" id="cb2-4" title="4">|       :   <span class="bn">0x00404674</span>      <span class="kw">add</span> dword [<span class="bn">0x4084d0</span>], <span class="bn">0x601605c7</span></a>
+<a class="sourceLine" id="cb2-5" title="5">|       :   <span class="bn">0x0040467e</span>      inc eax</a>
+<a class="sourceLine" id="cb2-6" title="6">|       :   <span class="bn">0x0040467f</span>      <span class="kw">add</span> bl, ch</a>
+<a class="sourceLine" id="cb2-7" title="7">|      |:   <span class="bn">0x00404681</span>      pushal</a>
+<a class="sourceLine" id="cb2-8" title="8">|      |:   <span class="bn">0x00404682</span>      nop</a>
+<a class="sourceLine" id="cb2-9" title="9">|      |:   <span class="bn">0x00404683</span>      popal</a>
+<a class="sourceLine" id="cb2-10" title="10">\      |:   <span class="bn">0x00404684</span>      <span class="fu">call</span> fcn<span class="fl">.00404689</span></a>
+<a class="sourceLine" id="cb2-11" title="11">/ (fcn) fcn<span class="fl">.00404689</span> <span class="dv">7</span></a>
+<a class="sourceLine" id="cb2-12" title="12">|   fcn<span class="fl">.00404689</span> ();</a>
+<a class="sourceLine" id="cb2-13" title="13">|      |:   <span class="bn">0x00404689</span>      inc dword [<span class="bn">0x4084d0</span>]</a>
+<a class="sourceLine" id="cb2-14" title="14">\      |:   <span class="bn">0x0040468f</span>      ret</a></code></pre></div>
+<p>首先这个函数第一句调用了 <code>0x0040467a</code>。从旁边的一列地址中我们可以发现，这个地址并不在 cutter 显示出来的这些地址里。这是由于 x86 是变长指令集所导致的——从任意地址均可以（大概率）读出合法指令。也就是说，如果我们认为 <code>0x00404674</code> 地址为一条指令的开始，那么它就是 cutter 显示出来的 <code>add dword [0x4084d0], 0x601605c7</code> 这一句，这条指令的长度为 8 个字节；可是我们同样也可以认为 <code>0x0040467a</code> 是一条指令的开始，CPU 同样可以从这里继续执行，只不过此时 cutter 没有正确地把指令显示出来而已。</p>
+<p>我们可以在 <code>0x00404674</code> 上右键选择“Set to Data”，选择 “…”：</p>
+<p><img src="/assets/local/posts/reversing-kr-replace/set_to_data.jpg" alt="set_to_data" /></p>
+<p>然后在弹出的对话框中填入 6（即 <code>0x0040467a - 0x00404674</code>），让 r2 将 <code>0x00404674</code> 处的字节解释为长度为 6 字节的数据，从而使得它能够从 <code>0x0040467a</code> 处开始继续反汇编指令。这样这个函数就变成了：</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb3-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">26</span></a>
+<a class="sourceLine" id="cb3-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
+<a class="sourceLine" id="cb3-3" title="3">|       :   <span class="bn">0x0040466f</span>      <span class="fu">call</span> <span class="bn">0x40467a</span></a>
+<a class="sourceLine" id="cb3-4" title="4">|       :   <span class="bn">0x00404674</span>      hex <span class="fu">length</span>=<span class="dv">6</span> delta=<span class="dv">0</span></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="bn">0x00404674</span>  <span class="dv">81</span> <span class="dv">05</span> d0 <span class="dv">84</span> <span class="dv">40</span> <span class="dv">00</span>                           ....@.</a>
+<a class="sourceLine" id="cb3-6" title="6"></a>
+<a class="sourceLine" id="cb3-7" title="7">|       :   <span class="bn">0x0040467a</span>      mov dword [<span class="bn">0x406016</span>], <span class="bn">0x619060eb</span> ; [<span class="bn">0x406016</span>:<span class="dv">4</span>]=<span class="dv">0</span></a>
+<a class="sourceLine" id="cb3-8" title="8">\      |:   <span class="bn">0x00404684</span>      <span class="fu">call</span> fcn<span class="fl">.00404689</span></a>
+<a class="sourceLine" id="cb3-9" title="9">/ (fcn) fcn<span class="fl">.00404689</span> <span class="dv">7</span></a>
+<a class="sourceLine" id="cb3-10" title="10">|   fcn<span class="fl">.00404689</span> ();</a>
+<a class="sourceLine" id="cb3-11" title="11">|      |:   <span class="bn">0x00404689</span>      inc dword [<span class="bn">0x4084d0</span>]</a>
+<a class="sourceLine" id="cb3-12" title="12">\      |:   <span class="bn">0x0040468f</span>      ret</a></code></pre></div>
+<p><code>0x0040467a</code> 是一个 <code>mov</code>，这个地址似乎没什么用，这条指令也不影响程序的逻辑，可以忽略。接下来需要注意的是，<code>call fcn.00404689</code> 直接 <code>call</code> 了下一行指令 <code>0x00404689</code>，这里即将输入的数字加一；<code>ret</code> 返回后再次回到了 <code>0x00404689</code>，又执行了一次加一操作，而后函数才返回。此时我们已经将输入加 2 了。</p>
+<p>返回后就返回到了 <code>0x0040466f</code> 的下一个字节处，即此时 <code>0x00404674</code> 就是新一条指令的开始了。我们需要在 cutter 里面把刚才的“Set to Data”取消掉——在 <code>0x00404674</code> 上右键，选择“Set as Code”即可：</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb4-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">26</span></a>
+<a class="sourceLine" id="cb4-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
+<a class="sourceLine" id="cb4-3" title="3">|       :   <span class="bn">0x0040466f</span>      <span class="fu">call</span> <span class="bn">0x40467a</span></a>
+<a class="sourceLine" id="cb4-4" title="4">|       :   <span class="bn">0x00404674</span>      <span class="kw">add</span> dword [<span class="bn">0x4084d0</span>], <span class="bn">0x601605c7</span></a>
+<a class="sourceLine" id="cb4-5" title="5">|       :   <span class="bn">0x0040467e</span>      inc eax</a>
+<a class="sourceLine" id="cb4-6" title="6">|       :   <span class="bn">0x0040467f</span>      <span class="kw">add</span> bl, ch</a>
+<a class="sourceLine" id="cb4-7" title="7">|      |:   <span class="bn">0x00404681</span>      pushal</a>
+<a class="sourceLine" id="cb4-8" title="8">|      |:   <span class="bn">0x00404682</span>      nop</a>
+<a class="sourceLine" id="cb4-9" title="9">|      |:   <span class="bn">0x00404683</span>      popal</a>
+<a class="sourceLine" id="cb4-10" title="10">\      |:   <span class="bn">0x00404684</span>      <span class="fu">call</span> fcn<span class="fl">.00404689</span></a>
+<a class="sourceLine" id="cb4-11" title="11">/ (fcn) fcn<span class="fl">.00404689</span> <span class="dv">7</span></a>
+<a class="sourceLine" id="cb4-12" title="12">|   fcn<span class="fl">.00404689</span> ();</a>
+<a class="sourceLine" id="cb4-13" title="13">|      |:   <span class="bn">0x00404689</span>      inc dword [<span class="bn">0x4084d0</span>]</a>
+<a class="sourceLine" id="cb4-14" title="14">\      |:   <span class="bn">0x0040468f</span>      ret</a></code></pre></div>
+<p>这样继续执行的话，<code>0x00404674</code> 处将我们的输入加上了 <code>0x601605c7</code>。随后是几条不影响程序逻辑的指令，然后又到了 <code>0x00404684</code> 这里。刚才我们已经分析过了，这几行代码会将我们的输入加 2。</p>
+<p>因此总结一下，<code>fcn.0040466f</code> 这个函数会把我们输入的数字加上 <code>2 + 0x601605c7 + 2</code>。</p>
+<p>回到刚才的消息处理函数中，调用了这个函数后，清空 <code>eax</code>，然后又 <code>jmp</code> 到了 <code>loc.00404690</code>处：</p>
+<p><code>{.as, .lineno} |      |:   0x00404690      mov eax, dword [0x4084d0] ; [0x4084d0:4]=0 |      |:   0x00404695      push 0x40469f |      |:   0x0040469a      call fcn.00404689 |      |:   0x0040469f      mov dword [fcn.0040466f], 0xc39000c6 ; [0x40466f:4]=0x6e8 |      |:   0x004046a9      call fcn.0040466f |      |:   0x004046ae      inc eax |      |:   0x004046af      call fcn.0040466f |      |:   0x004046b4      mov dword [fcn.0040466f], 0x6e8 ; [0x40466f:4]=0x6e8 |      |:   0x004046be      pop eax |      |:   0x004046bf      mov eax, 0xffffffff ; -1 \      |`=&lt; 0x004046c4      jmp fcn.00401071</code></p>
+<p>首先第一行是把我们的数据读入至 <code>eax</code>。第二行压入了一个立即数，通过后续分析发现倒数第三行 <code>pop eax</code> 将这个数拿回了 <code>eax</code>，但是随后重新设置了 <code>eax</code> 的值，因此这个 <code>push</code> 也没什么用。第三行调用了 <code>fcn.00404689</code> 将我们输入的数字加一，但要注意我们刚才已经将这个数字读出至 <code>eax</code>，因此这一次调用不会影响到 <code>eax</code> 的值。</p>
+<p>第四行 <code>mov dword [fcn.0040466f], 0xc39000c6</code>，这条指令将 <code>0040466f</code> 处的数据做了修改，这不就是我们刚才看的函数吗？也就是说，这一句代码在运行时改变了 <code>0x0040466f</code> 处的汇编指令。首先看看没改动之前的情况：</p>
+<p><img src="/assets/local/posts/reversing-kr-replace/before.jpg" alt="before" /></p>
+<p>我们把从 <code>0x0040466f</code> 开始的四个字节修改为 <code>0xc6 0x00 0x90 0xc3</code>，然后重新用 cutter 打开查看反汇编：</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb5-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">4</span></a>
+<a class="sourceLine" id="cb5-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
+<a class="sourceLine" id="cb5-3" title="3">|       :   <span class="bn">0x0040466f</span>      mov  byte [eax], <span class="bn">0x90</span> ; [<span class="bn">0x90</span>:<span class="dv">1</span>]=<span class="dv">255</span> ; <span class="dv">144</span></a>
+<a class="sourceLine" id="cb5-4" title="4">\       :   <span class="bn">0x00404672</span>      ret</a></code></pre></div>
+<p>这个函数的作用就变为了向 <code>eax</code> 处写入 <code>nop</code>。</p>
+<p>继续向下看到第五行：</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb6-1" title="1">|      |:   <span class="bn">0x004046a9</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
+<a class="sourceLine" id="cb6-2" title="2">|      |:   <span class="bn">0x004046ae</span>      inc eax</a>
+<a class="sourceLine" id="cb6-3" title="3">|      |:   <span class="bn">0x004046af</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a></code></pre></div>
+<p>调用了 <code>fcn.0040466f</code>，随后 <code>eax</code> 加一，再调用一次 <code>fcn.0040466f</code>。也就是说，我们连续把从 <code>eax</code> 开始的两个字节都写成了 <code>nop</code>。要记得，<code>eax</code> 中就是根据我们输入的数字计算而得的。</p>
+<p>再往下就是把 <code>fcn.0040466f</code> 恢复原状，<code>eax</code> 置 -1 后，跳转到了 <code>fcn.00401071</code>。</p>
+<p>我们看一下 <code>fcn.00401071</code>：</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb7-1" title="1">\     ,===&lt; <span class="bn">0x00401071</span>      jmp loc<span class="fl">.00401084</span></a>
+<a class="sourceLine" id="cb7-2" title="2">      |||   <span class="bn">0x00401073</span>      push str.<span class="fu">Correct</span> ; <span class="bn">0x406034</span> ; <span class="st">&quot;Correct!&quot;</span></a>
+<a class="sourceLine" id="cb7-3" title="3">      |||   <span class="bn">0x00401078</span>      push <span class="bn">0x3e9</span> ; <span class="dv">1001</span></a>
+<a class="sourceLine" id="cb7-4" title="4">      |||   <span class="bn">0x0040107d</span>      push esi</a>
+<a class="sourceLine" id="cb7-5" title="5">      |||   <span class="bn">0x0040107e</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_SetDlgItemTextA</span>] ; <span class="bn">0x4050a0</span> ; <span class="st">&quot;NU&quot;</span></a>
+<a class="sourceLine" id="cb7-6" title="6">|- loc<span class="fl">.00401084</span> <span class="dv">17</span></a>
+<a class="sourceLine" id="cb7-7" title="7">|   loc<span class="fl">.00401084</span> ();</a>
+<a class="sourceLine" id="cb7-8" title="8">|     `---&gt; <span class="bn">0x00401084</span>      mov eax, <span class="dv">1</span></a>
+<a class="sourceLine" id="cb7-9" title="9">|      ||   <span class="bn">0x00401089</span>      nop</a>
+<a class="sourceLine" id="cb7-10" title="10">|      ||   <span class="bn">0x0040108a</span>      nop</a>
+<a class="sourceLine" id="cb7-11" title="11">|      ||   <span class="bn">0x0040108b</span>      nop</a>
+<a class="sourceLine" id="cb7-12" title="12">|      ||   <span class="bn">0x0040108c</span>      nop</a>
+<a class="sourceLine" id="cb7-13" title="13">|      ||   <span class="bn">0x0040108d</span>      nop</a>
+<a class="sourceLine" id="cb7-14" title="14">|      ||   <span class="bn">0x0040108e</span>      nop</a>
+<a class="sourceLine" id="cb7-15" title="15">|      ||   <span class="bn">0x0040108f</span>      nop</a>
+<a class="sourceLine" id="cb7-16" title="16">|      ||   <span class="bn">0x00401090</span>      pop esi</a>
+<a class="sourceLine" id="cb7-17" title="17">|      ||   <span class="bn">0x00401091</span>      pop ebp</a>
+<a class="sourceLine" id="cb7-18" title="18">\      ||   <span class="bn">0x00401092</span>      ret <span class="bn">0x10</span></a></code></pre></div>
+<p>刚好在我们的 <code>Correct</code> 上方，一个 <code>jmp</code> 就跳走了。联系刚才那段逻辑可以想到，我们完全可以将 <code>0x00401071</code> 处的两个字节修改为 <code>nop</code>，这样就能够输出 <code>Correct</code> 了。因此我们输入的数字应为 <code>0x00401071 - (2 + 0x601605c7 + 2) = 0xa02a0aa6</code>。</p>
+<p>这里还需要注意的是，由于 <code>GetDlgItemInt</code> 的返回类型是 <code>UINT</code>，因此应该以无符号整数解释 <code>0xa02a0aa6</code>。所以只需要在对话框中填入<flag>2687109798</flag>，程序就能够显示“Correct”了，这串数字即为 flag。</p>
+</div>
+</div>
+
+
+</div>
+
+        </div>
+        <div class="mt-5 p-5 bg-light text-muted">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-4">
+                        <h5>dontpan1c 的 CTF 笔记</h5>
+                        <span class="d-block font-weight-light">南阳一出即相，淮阴一出即将。</span>
+                        <div class="btn-toolbar mt-4">
+                            <div class="btn-group">
+                              <a class="btn btn-secondary" href="https://github.com/dontpanic92"
+                              target="_blank"><i class="fab fa-fw fa-github"></i></a>
+                              <a class="btn btn-secondary" href="https://zhihu.com/people/li-sheng-qiu"
+                              target="_blank"><i class="fab fa-fw fa-zhihu"></i></a>
+                              <a class="btn btn-secondary" href="https://weibo.com/1184181045/profile"
+                              target="_blank"><i class="fab fa-fw fa-weibo"></i></a>
+                              <a class="btn btn-secondary" href="https://linkedin.com/in/lishengqiu"
+                              target="_blank"><i class="fab fa-fw fa-linkedin-in"></i></a>
+                              <a class="btn btn-secondary" href="https://stackoverflow.com/users/3196456"
+                              target="_blank"><i class="fab fa-fw fa-stack-overflow"></i></a>
+                              <a class="btn btn-secondary" href="http://renren.com/419200039"
+                              target="_blank"><i class="fab fa-fw fa-renren"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <p><a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license"><img src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"
+                                    alt="知识共享许可协议"></a></p>
+                        <p><small>本站所有作品均采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">知识共享署名-非商业性使用-相同方式共享
+                                    4.0 国际许可协议</a>进行许可。</small></p>
+                        <p><small>本站不包含明令禁止公开解题过程的题目。</small></p>
+                        <span><small>本站由 <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> 强力驱动。</small></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
