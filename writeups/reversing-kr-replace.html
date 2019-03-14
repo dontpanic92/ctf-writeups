@@ -261,41 +261,51 @@
 <p>这样继续执行的话，<code>0x00404674</code> 处将我们的输入加上了 <code>0x601605c7</code>。随后是几条不影响程序逻辑的指令，然后又到了 <code>0x00404684</code> 这里。刚才我们已经分析过了，这几行代码会将我们的输入加 2。</p>
 <p>因此总结一下，<code>fcn.0040466f</code> 这个函数会把我们输入的数字加上 <code>2 + 0x601605c7 + 2</code>。</p>
 <p>回到刚才的消息处理函数中，调用了这个函数后，清空 <code>eax</code>，然后又 <code>jmp</code> 到了 <code>loc.00404690</code>处：</p>
-<p><code>{ .as, .lineno } |      |:   0x00404690      mov eax, dword [0x4084d0] ; [0x4084d0:4]=0 |      |:   0x00404695      push 0x40469f |      |:   0x0040469a      call fcn.00404689 |      |:   0x0040469f      mov dword [fcn.0040466f], 0xc39000c6 ; [0x40466f:4]=0x6e8 |      |:   0x004046a9      call fcn.0040466f |      |:   0x004046ae      inc eax |      |:   0x004046af      call fcn.0040466f |      |:   0x004046b4      mov dword [fcn.0040466f], 0x6e8 ; [0x40466f:4]=0x6e8 |      |:   0x004046be      pop eax |      |:   0x004046bf      mov eax, 0xffffffff ; -1 \      |`=&lt; 0x004046c4      jmp fcn.00401071</code></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource as numberLines"><code class="sourceCode actionscript"><a class="sourceLine" id="cb5-1" title="1">|      |:   <span class="bn">0x00404690</span>      mov eax, dword [<span class="bn">0x4084d0</span>] ; [<span class="bn">0x4084d0</span>:<span class="dv">4</span>]=<span class="dv">0</span></a>
+<a class="sourceLine" id="cb5-2" title="2">|      |:   <span class="bn">0x00404695</span>      push <span class="bn">0x40469f</span></a>
+<a class="sourceLine" id="cb5-3" title="3">|      |:   <span class="bn">0x0040469a</span>      <span class="fu">call</span> fcn<span class="fl">.00404689</span></a>
+<a class="sourceLine" id="cb5-4" title="4">|      |:   <span class="bn">0x0040469f</span>      mov dword [fcn<span class="fl">.0040466f</span>], <span class="bn">0xc39000c6</span> ; [<span class="bn">0x40466f</span>:<span class="dv">4</span>]=<span class="bn">0x6e8</span></a>
+<a class="sourceLine" id="cb5-5" title="5">|      |:   <span class="bn">0x004046a9</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
+<a class="sourceLine" id="cb5-6" title="6">|      |:   <span class="bn">0x004046ae</span>      inc eax</a>
+<a class="sourceLine" id="cb5-7" title="7">|      |:   <span class="bn">0x004046af</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
+<a class="sourceLine" id="cb5-8" title="8">|      |:   <span class="bn">0x004046b4</span>      mov dword [fcn<span class="fl">.0040466f</span>], <span class="bn">0x6e8</span> ; [<span class="bn">0x40466f</span>:<span class="dv">4</span>]=<span class="bn">0x6e8</span></a>
+<a class="sourceLine" id="cb5-9" title="9">|      |:   <span class="bn">0x004046be</span>      pop eax</a>
+<a class="sourceLine" id="cb5-10" title="10">|      |:   <span class="bn">0x004046bf</span>      mov eax, <span class="bn">0xffffffff</span> ; <span class="dv">-1</span></a>
+<a class="sourceLine" id="cb5-11" title="11">\      |`=&lt; <span class="bn">0x004046c4</span>      jmp fcn<span class="fl">.00401071</span></a></code></pre></div>
 <p>首先第一行是把我们的数据读入至 <code>eax</code>。第二行压入了一个立即数，通过后续分析发现倒数第三行 <code>pop eax</code> 将这个数拿回了 <code>eax</code>，但是随后重新设置了 <code>eax</code> 的值，因此这个 <code>push</code> 也没什么用。第三行调用了 <code>fcn.00404689</code> 将我们输入的数字加一，但要注意我们刚才已经将这个数字读出至 <code>eax</code>，因此这一次调用不会影响到 <code>eax</code> 的值。</p>
 <p>第四行 <code>mov dword [fcn.0040466f], 0xc39000c6</code>，这条指令将 <code>0040466f</code> 处的数据做了修改，这不就是我们刚才看的函数吗？也就是说，这一句代码在运行时改变了 <code>0x0040466f</code> 处的汇编指令。首先看看没改动之前的情况：</p>
 <p><img src="/assets/local/posts/reversing-kr-replace/before.jpg" alt="before" /></p>
 <p>我们把从 <code>0x0040466f</code> 开始的四个字节修改为 <code>0xc6 0x00 0x90 0xc3</code>，然后重新用 cutter 打开查看反汇编：</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb5-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">4</span></a>
-<a class="sourceLine" id="cb5-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
-<a class="sourceLine" id="cb5-3" title="3">|       :   <span class="bn">0x0040466f</span>      mov  byte [eax], <span class="bn">0x90</span> ; [<span class="bn">0x90</span>:<span class="dv">1</span>]=<span class="dv">255</span> ; <span class="dv">144</span></a>
-<a class="sourceLine" id="cb5-4" title="4">\       :   <span class="bn">0x00404672</span>      ret</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb6-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">4</span></a>
+<a class="sourceLine" id="cb6-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
+<a class="sourceLine" id="cb6-3" title="3">|       :   <span class="bn">0x0040466f</span>      mov  byte [eax], <span class="bn">0x90</span> ; [<span class="bn">0x90</span>:<span class="dv">1</span>]=<span class="dv">255</span> ; <span class="dv">144</span></a>
+<a class="sourceLine" id="cb6-4" title="4">\       :   <span class="bn">0x00404672</span>      ret</a></code></pre></div>
 <p>这个函数的作用就变为了向 <code>eax</code> 处写入 <code>nop</code>。</p>
 <p>继续向下看到第五行：</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb6-1" title="1">|      |:   <span class="bn">0x004046a9</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
-<a class="sourceLine" id="cb6-2" title="2">|      |:   <span class="bn">0x004046ae</span>      inc eax</a>
-<a class="sourceLine" id="cb6-3" title="3">|      |:   <span class="bn">0x004046af</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb7-1" title="1">|      |:   <span class="bn">0x004046a9</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a>
+<a class="sourceLine" id="cb7-2" title="2">|      |:   <span class="bn">0x004046ae</span>      inc eax</a>
+<a class="sourceLine" id="cb7-3" title="3">|      |:   <span class="bn">0x004046af</span>      <span class="fu">call</span> fcn<span class="fl">.0040466f</span></a></code></pre></div>
 <p>调用了 <code>fcn.0040466f</code>，随后 <code>eax</code> 加一，再调用一次 <code>fcn.0040466f</code>。也就是说，我们连续把从 <code>eax</code> 开始的两个字节都写成了 <code>nop</code>。要记得，<code>eax</code> 中就是根据我们输入的数字计算而得的。</p>
 <p>再往下就是把 <code>fcn.0040466f</code> 恢复原状，<code>eax</code> 置 -1 后，跳转到了 <code>fcn.00401071</code>。</p>
 <p>我们看一下 <code>fcn.00401071</code>：</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb7-1" title="1">\     ,===&lt; <span class="bn">0x00401071</span>      jmp loc<span class="fl">.00401084</span></a>
-<a class="sourceLine" id="cb7-2" title="2">      |||   <span class="bn">0x00401073</span>      push str.<span class="fu">Correct</span> ; <span class="bn">0x406034</span> ; <span class="st">&quot;Correct!&quot;</span></a>
-<a class="sourceLine" id="cb7-3" title="3">      |||   <span class="bn">0x00401078</span>      push <span class="bn">0x3e9</span> ; <span class="dv">1001</span></a>
-<a class="sourceLine" id="cb7-4" title="4">      |||   <span class="bn">0x0040107d</span>      push esi</a>
-<a class="sourceLine" id="cb7-5" title="5">      |||   <span class="bn">0x0040107e</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_SetDlgItemTextA</span>] ; <span class="bn">0x4050a0</span> ; <span class="st">&quot;NU&quot;</span></a>
-<a class="sourceLine" id="cb7-6" title="6">|- loc<span class="fl">.00401084</span> <span class="dv">17</span></a>
-<a class="sourceLine" id="cb7-7" title="7">|   loc<span class="fl">.00401084</span> ();</a>
-<a class="sourceLine" id="cb7-8" title="8">|     `---&gt; <span class="bn">0x00401084</span>      mov eax, <span class="dv">1</span></a>
-<a class="sourceLine" id="cb7-9" title="9">|      ||   <span class="bn">0x00401089</span>      nop</a>
-<a class="sourceLine" id="cb7-10" title="10">|      ||   <span class="bn">0x0040108a</span>      nop</a>
-<a class="sourceLine" id="cb7-11" title="11">|      ||   <span class="bn">0x0040108b</span>      nop</a>
-<a class="sourceLine" id="cb7-12" title="12">|      ||   <span class="bn">0x0040108c</span>      nop</a>
-<a class="sourceLine" id="cb7-13" title="13">|      ||   <span class="bn">0x0040108d</span>      nop</a>
-<a class="sourceLine" id="cb7-14" title="14">|      ||   <span class="bn">0x0040108e</span>      nop</a>
-<a class="sourceLine" id="cb7-15" title="15">|      ||   <span class="bn">0x0040108f</span>      nop</a>
-<a class="sourceLine" id="cb7-16" title="16">|      ||   <span class="bn">0x00401090</span>      pop esi</a>
-<a class="sourceLine" id="cb7-17" title="17">|      ||   <span class="bn">0x00401091</span>      pop ebp</a>
-<a class="sourceLine" id="cb7-18" title="18">\      ||   <span class="bn">0x00401092</span>      ret <span class="bn">0x10</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb8-1" title="1">\     ,===&lt; <span class="bn">0x00401071</span>      jmp loc<span class="fl">.00401084</span></a>
+<a class="sourceLine" id="cb8-2" title="2">      |||   <span class="bn">0x00401073</span>      push str.<span class="fu">Correct</span> ; <span class="bn">0x406034</span> ; <span class="st">&quot;Correct!&quot;</span></a>
+<a class="sourceLine" id="cb8-3" title="3">      |||   <span class="bn">0x00401078</span>      push <span class="bn">0x3e9</span> ; <span class="dv">1001</span></a>
+<a class="sourceLine" id="cb8-4" title="4">      |||   <span class="bn">0x0040107d</span>      push esi</a>
+<a class="sourceLine" id="cb8-5" title="5">      |||   <span class="bn">0x0040107e</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_SetDlgItemTextA</span>] ; <span class="bn">0x4050a0</span> ; <span class="st">&quot;NU&quot;</span></a>
+<a class="sourceLine" id="cb8-6" title="6">|- loc<span class="fl">.00401084</span> <span class="dv">17</span></a>
+<a class="sourceLine" id="cb8-7" title="7">|   loc<span class="fl">.00401084</span> ();</a>
+<a class="sourceLine" id="cb8-8" title="8">|     `---&gt; <span class="bn">0x00401084</span>      mov eax, <span class="dv">1</span></a>
+<a class="sourceLine" id="cb8-9" title="9">|      ||   <span class="bn">0x00401089</span>      nop</a>
+<a class="sourceLine" id="cb8-10" title="10">|      ||   <span class="bn">0x0040108a</span>      nop</a>
+<a class="sourceLine" id="cb8-11" title="11">|      ||   <span class="bn">0x0040108b</span>      nop</a>
+<a class="sourceLine" id="cb8-12" title="12">|      ||   <span class="bn">0x0040108c</span>      nop</a>
+<a class="sourceLine" id="cb8-13" title="13">|      ||   <span class="bn">0x0040108d</span>      nop</a>
+<a class="sourceLine" id="cb8-14" title="14">|      ||   <span class="bn">0x0040108e</span>      nop</a>
+<a class="sourceLine" id="cb8-15" title="15">|      ||   <span class="bn">0x0040108f</span>      nop</a>
+<a class="sourceLine" id="cb8-16" title="16">|      ||   <span class="bn">0x00401090</span>      pop esi</a>
+<a class="sourceLine" id="cb8-17" title="17">|      ||   <span class="bn">0x00401091</span>      pop ebp</a>
+<a class="sourceLine" id="cb8-18" title="18">\      ||   <span class="bn">0x00401092</span>      ret <span class="bn">0x10</span></a></code></pre></div>
 <p>刚好在我们的 <code>Correct</code> 上方，一个 <code>jmp</code> 就跳走了。联系刚才那段逻辑可以想到，我们完全可以将 <code>0x00401071</code> 处的两个字节修改为 <code>nop</code>，这样就能够输出 <code>Correct</code> 了。因此我们输入的数字应为 <code>0x00401071 - (2 + 0x601605c7 + 2) = 0xa02a0aa6</code>。</p>
 <p>这里还需要注意的是，由于 <code>GetDlgItemInt</code> 的返回类型是 <code>UINT</code>，因此应该以无符号整数解释 <code>0xa02a0aa6</code>。所以只需要在对话框中填入<flag>2687109798</flag>，程序就能够显示“Correct”了，这串数字即为 flag。</p>
 </div>
