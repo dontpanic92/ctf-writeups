@@ -119,7 +119,7 @@ challenge_url: http://reversing.kr/challenge.php
 
 回到刚才的消息处理函数中，调用了这个函数后，清空 `eax`，然后又 `jmp` 到了 `loc.00404690`处：
 
-```{ .as, .lineno }
+```{ .as .numberLines }
 |      |:   0x00404690      mov eax, dword [0x4084d0] ; [0x4084d0:4]=0
 |      |:   0x00404695      push 0x40469f
 |      |:   0x0040469a      call fcn.00404689
