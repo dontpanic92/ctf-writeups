@@ -14,7 +14,7 @@ install:
   - bundle install
   
 script:
-  - jekyll build
+  - jekyll build --verbose --trace
 
 deploy:
   provider: pages
