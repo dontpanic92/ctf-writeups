@@ -211,7 +211,7 @@
 <a class="sourceLine" id="cb1-30" title="30">      |||   <span class="bn">0x00401078</span>      push <span class="bn">0x3e9</span> ; <span class="dv">1001</span></a>
 <a class="sourceLine" id="cb1-31" title="31">      |||   <span class="bn">0x0040107d</span>      push esi</a>
 <a class="sourceLine" id="cb1-32" title="32">      |||   <span class="bn">0x0040107e</span>      <span class="fu">call</span> dword [sym.<span class="fu">imp</span>.<span class="fu">USER32</span>.<span class="fu">dll_SetDlgItemTextA</span>] ; <span class="bn">0x4050a0</span> ; <span class="st">&quot;NU&quot;</span></a></code></pre></div>
-<p>我们感兴趣的地方从 <code>0x0040105a</code> 这里开始。程序首先调用了 <code>GetDlgItemInt</code> 将文本框中的文本按照整数读出，将其存入 <code>0x004084d0</code>中，；而后又调用了一个函数，紧接着是两个 <code>jmp</code>。此时如果搜索下面压入“Correct”字符串处的地址 <code>0x00401073</code>，会发现并没有地方直接引用它，很奇怪。不管它了，还是先看一下 <code>fcn.0040466f</code> 处的函数吧：</p>
+<p>我们感兴趣的地方从 <code>0x0040105a</code> 这里开始。程序首先调用了 <code>GetDlgItemInt</code> 将文本框中的文本按照整数读出，将其存入 <code>0x004084d0</code>中；而后又调用了一个函数，紧接着是两个 <code>jmp</code>。此时如果搜索下面压入“Correct”字符串处的地址 <code>0x00401073</code>，会发现并没有地方直接引用它，很奇怪。不管它了，还是先看一下 <code>fcn.0040466f</code> 处的函数吧：</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode as"><code class="sourceCode actionscript"><a class="sourceLine" id="cb2-1" title="1">/ (fcn) fcn<span class="fl">.0040466f</span> <span class="dv">26</span></a>
 <a class="sourceLine" id="cb2-2" title="2">|   fcn<span class="fl">.0040466f</span> ();</a>
 <a class="sourceLine" id="cb2-3" title="3">|       :   <span class="bn">0x0040466f</span>      <span class="fu">call</span> <span class="bn">0x40467a</span></a>
@@ -226,7 +226,7 @@
 <a class="sourceLine" id="cb2-12" title="12">|   fcn<span class="fl">.00404689</span> ();</a>
 <a class="sourceLine" id="cb2-13" title="13">|      |:   <span class="bn">0x00404689</span>      inc dword [<span class="bn">0x4084d0</span>]</a>
 <a class="sourceLine" id="cb2-14" title="14">\      |:   <span class="bn">0x0040468f</span>      ret</a></code></pre></div>
-<p>首先这个函数第一句调用了 <code>0x0040467a</code>。从旁边的一列地址中我们可以发现，这个地址并不在 cutter 显示出来的这些地址里。这是由于 x86 是变长指令集所导致的——从任意地址均可以（大概率）读出合法指令。也就是说，如果我们认为 <code>0x00404674</code> 地址为一条指令的开始，那么它就是 cutter 显示出来的 <code>add dword [0x4084d0], 0x601605c7</code> 这一句，这条指令的长度为 8 个字节；可是我们同样也可以认为 <code>0x0040467a</code> 是一条指令的开始，CPU 同样可以从这里继续执行，只不过此时 cutter 没有正确地把指令显示出来而已。</p>
+<p>首先这个函数第一句调用了 <code>0x0040467a</code>。从旁边的一列地址中我们可以发现，这个地址并不在 cutter 显示出来的这些地址里。这是由于 x86 是变长指令集所导致的——任意地址都可以认为是一条指令的开始。也就是说，如果我们认为 <code>0x00404674</code> 地址为一条指令的开始，那么它就是 cutter 显示出来的 <code>add dword [0x4084d0], 0x601605c7</code> 这一句，这条指令的长度为 8 个字节；可是我们同样也可以认为 <code>0x0040467a</code> 是一条指令的开始，CPU 同样可以从这里继续执行，只不过此时 cutter 没有正确地把指令显示出来而已。</p>
 <p>我们可以在 <code>0x00404674</code> 上右键选择“Set to Data”，选择 “…”：</p>
 <p><img src="/assets/local/posts/reversing-kr-replace/set_to_data.jpg" alt="set_to_data" /></p>
 <p>然后在弹出的对话框中填入 6（即 <code>0x0040467a - 0x00404674</code>），让 r2 将 <code>0x00404674</code> 处的字节解释为长度为 6 字节的数据，从而使得它能够从 <code>0x0040467a</code> 处开始继续反汇编指令。这样这个函数就变成了：</p>
@@ -261,7 +261,7 @@
 <p>这样继续执行的话，<code>0x00404674</code> 处将我们的输入加上了 <code>0x601605c7</code>。随后是几条不影响程序逻辑的指令，然后又到了 <code>0x00404684</code> 这里。刚才我们已经分析过了，这几行代码会将我们的输入加 2。</p>
 <p>因此总结一下，<code>fcn.0040466f</code> 这个函数会把我们输入的数字加上 <code>2 + 0x601605c7 + 2</code>。</p>
 <p>回到刚才的消息处理函数中，调用了这个函数后，清空 <code>eax</code>，然后又 <code>jmp</code> 到了 <code>loc.00404690</code>处：</p>
-<p><code>{.as, .lineno} |      |:   0x00404690      mov eax, dword [0x4084d0] ; [0x4084d0:4]=0 |      |:   0x00404695      push 0x40469f |      |:   0x0040469a      call fcn.00404689 |      |:   0x0040469f      mov dword [fcn.0040466f], 0xc39000c6 ; [0x40466f:4]=0x6e8 |      |:   0x004046a9      call fcn.0040466f |      |:   0x004046ae      inc eax |      |:   0x004046af      call fcn.0040466f |      |:   0x004046b4      mov dword [fcn.0040466f], 0x6e8 ; [0x40466f:4]=0x6e8 |      |:   0x004046be      pop eax |      |:   0x004046bf      mov eax, 0xffffffff ; -1 \      |`=&lt; 0x004046c4      jmp fcn.00401071</code></p>
+<p><code>{ .as, .lineno } |      |:   0x00404690      mov eax, dword [0x4084d0] ; [0x4084d0:4]=0 |      |:   0x00404695      push 0x40469f |      |:   0x0040469a      call fcn.00404689 |      |:   0x0040469f      mov dword [fcn.0040466f], 0xc39000c6 ; [0x40466f:4]=0x6e8 |      |:   0x004046a9      call fcn.0040466f |      |:   0x004046ae      inc eax |      |:   0x004046af      call fcn.0040466f |      |:   0x004046b4      mov dword [fcn.0040466f], 0x6e8 ; [0x40466f:4]=0x6e8 |      |:   0x004046be      pop eax |      |:   0x004046bf      mov eax, 0xffffffff ; -1 \      |`=&lt; 0x004046c4      jmp fcn.00401071</code></p>
 <p>首先第一行是把我们的数据读入至 <code>eax</code>。第二行压入了一个立即数，通过后续分析发现倒数第三行 <code>pop eax</code> 将这个数拿回了 <code>eax</code>，但是随后重新设置了 <code>eax</code> 的值，因此这个 <code>push</code> 也没什么用。第三行调用了 <code>fcn.00404689</code> 将我们输入的数字加一，但要注意我们刚才已经将这个数字读出至 <code>eax</code>，因此这一次调用不会影响到 <code>eax</code> 的值。</p>
 <p>第四行 <code>mov dword [fcn.0040466f], 0xc39000c6</code>，这条指令将 <code>0040466f</code> 处的数据做了修改，这不就是我们刚才看的函数吗？也就是说，这一句代码在运行时改变了 <code>0x0040466f</code> 处的汇编指令。首先看看没改动之前的情况：</p>
 <p><img src="/assets/local/posts/reversing-kr-replace/before.jpg" alt="before" /></p>
